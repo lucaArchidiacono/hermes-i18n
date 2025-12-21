@@ -6,67 +6,33 @@ import { logger } from "../../utils/logger.js";
 /**
  * Default config file content
  */
-const DEFAULT_CONFIG = `import type { HermesConfig } from "hermes-i18n";
-
-const config: HermesConfig = {
-  // Source language (keys are written in this language)
-  sourceLanguage: "en",
-
-  // Target languages to translate into
-  targetLanguages: ["de", "fr", "es", "it"],
-
-  // Source file (source of truth, keys get auto-added here)
-  source: {
-    path: "./locales/en/Localizable.strings",
-    type: "strings",
+const DEFAULT_CONFIG = `{
+  "sourceLanguage": "en",
+  "targetLanguages": ["de", "fr", "es", "it"],
+  "source": {
+    "path": "./locales/en/Localizable.strings",
+    "type": "strings"
   },
-
-  // Output files per language (use {lang} placeholder)
-  outputs: [
+  "outputs": [
     {
-      type: "strings",
-      path: "./locales/{lang}/Localizable.strings",
+      "type": "strings",
+      "path": "./locales/{lang}/Localizable.strings"
     },
     {
-      type: "json",
-      path: "./locales/{lang}/Localizable.json",
-    },
-    // Uncomment for Android XML support:
-    // {
-    //   type: "xml",
-    //   path: "./locales/{lang}/strings.xml",
-    // },
+      "type": "json",
+      "path": "./locales/{lang}/Localizable.json"
+    }
   ],
-
-  // Files to scan for translation keys
-  include: ["./src/**/*.{ts,tsx,js,jsx}"],
-
-  // Files to exclude from scanning
-  exclude: ["**/node_modules/**", "**/dist/**", "**/build/**"],
-
-  // Optional: Custom extraction pattern (default shown)
-  // extractPattern: /_\\(["'\`](.+?)["'\`]\\)/g,
-
-  // DeepL configuration (optional)
-  deepl: {
-    // API key (defaults to DEEPL_API_KEY env variable)
-    // apiKey: process.env.DEEPL_API_KEY,
-    formality: "default", // "default" | "more" | "less" | "prefer_more" | "prefer_less"
+  "include": ["./src/**/*.{ts,tsx,js,jsx}"],
+  "exclude": ["**/node_modules/**", "**/dist/**", "**/build/**"],
+  "deepl": {
+    "formality": "default"
   },
-
-  // AI configuration (required)
-  ai: {
-    provider: "openai", // "openai" | "anthropic" | "google" | "mistral"
-    model: "gpt-4o-mini",
-    // API key (defaults to provider-specific env variable, e.g., OPENAI_API_KEY)
-    // apiKey: process.env.OPENAI_API_KEY,
-
-    // Optional: Custom system prompt
-    // systemPrompt: "You are a professional translator...",
-  },
-};
-
-export default config;
+  "ai": {
+    "provider": "openai",
+    "model": "gpt-4o-mini"
+  }
+}
 `;
 
 /**
@@ -76,13 +42,13 @@ export function initCommand(): Command {
   const command = new Command("init");
 
   command
-    .description("Create a hermes.config.ts file in the current directory")
+    .description("Create a hermes.config.json file in the current directory")
     .option("-f, --force", "Overwrite existing config file", false)
     .action(async (options) => {
-      const configPath = resolve(process.cwd(), "hermes.config.ts");
+      const configPath = resolve(process.cwd(), "hermes.config.json");
 
       if (existsSync(configPath) && !options.force) {
-        logger.error("hermes.config.ts already exists. Use --force to overwrite.");
+        logger.error("hermes.config.json already exists. Use --force to overwrite.");
         process.exit(1);
       }
 
@@ -91,7 +57,7 @@ export function initCommand(): Command {
         logger.success(`Created ${configPath}`);
         logger.info("");
         logger.info("Next steps:");
-        logger.info("  1. Edit hermes.config.ts to match your project structure");
+        logger.info("  1. Edit hermes.config.json to match your project structure");
         logger.info("  2. Set up environment variables for API keys:");
         logger.info("     - DEEPL_API_KEY (optional, for DeepL translations)");
         logger.info("     - OPENAI_API_KEY (or other provider key for AI)");

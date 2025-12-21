@@ -55,7 +55,7 @@ src/
 │       └── init.ts       # Config generator
 ├── config/
 │   ├── types.ts          # Config TypeScript types
-│   ├── loader.ts         # Load hermes.config.ts
+│   ├── loader.ts         # Load hermes.config.json
 │   └── defaults.ts       # Default values
 ├── pipeline/
 │   ├── index.ts          # Pipeline runner
@@ -119,7 +119,7 @@ hermes sync --verbose
 hermes sync --language de fr
 
 # Use custom config path
-hermes sync --config ./path/to/config.ts
+hermes sync --config ./path/to/hermes.config.json
 
 # Generate config file
 hermes init

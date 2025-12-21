@@ -68,8 +68,8 @@ export interface HermesConfig {
   include: string[];
   /** Glob patterns for files to exclude from scanning */
   exclude?: string[];
-  /** Regex pattern to extract translation keys (default: /_\(["'`](.+?)["'`]\)/g) */
-  extractPattern?: RegExp;
+  /** Regex pattern to extract translation keys as a string (default: /_\(["'`](.+?)["'`]\)/g) */
+  extractPattern?: string;
   /** DeepL configuration */
   deepl?: DeepLConfig;
   /** AI configuration */
@@ -79,7 +79,7 @@ export interface HermesConfig {
 /**
  * Resolved configuration with all defaults applied
  */
-export interface ResolvedHermesConfig extends HermesConfig {
+export interface ResolvedHermesConfig extends Omit<HermesConfig, "extractPattern"> {
   exclude: string[];
   extractPattern: RegExp;
   deepl: Required<DeepLConfig>;

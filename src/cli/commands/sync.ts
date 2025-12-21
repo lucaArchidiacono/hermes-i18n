@@ -18,7 +18,7 @@ export function syncCommand(): Command {
 
   command
     .description("Extract, sync, and translate localization strings")
-    .option("-c, --config <path>", "Path to config file")
+    .option("-c, --config <path>", "Path to hermes.config.json file")
     .option("-d, --dry-run", "Preview changes without writing files", false)
     .option("-v, --verbose", "Verbose output", false)
     .option("-l, --language <langs...>", "Only process specific language(s)")

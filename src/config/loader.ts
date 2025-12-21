@@ -1,6 +1,5 @@
-import { bundleRequire } from "bundle-require";
 import { resolve, dirname } from "path";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import type { HermesConfig, ResolvedHermesConfig } from "./types.js";
 import {
   DEFAULT_EXTRACT_PATTERN,
@@ -12,13 +11,9 @@ import {
 import { logger } from "../utils/logger.js";
 
 /**
- * Default config file names to search for
+ * Default config file name
  */
-const CONFIG_FILE_NAMES = [
-  "hermes.config.ts",
-  "hermes.config.js",
-  "hermes.config.mjs",
-];
+const CONFIG_FILE_NAME = "hermes.config.json";
 
 /**
  * Find the config file in the given directory or its parents
@@ -27,11 +22,9 @@ export function findConfigFile(startDir: string = process.cwd()): string | null 
   let currentDir = resolve(startDir);
 
   while (true) {
-    for (const fileName of CONFIG_FILE_NAMES) {
-      const configPath = resolve(currentDir, fileName);
-      if (existsSync(configPath)) {
-        return configPath;
-      }
+    const configPath = resolve(currentDir, CONFIG_FILE_NAME);
+    if (existsSync(configPath)) {
+      return configPath;
     }
 
     const parentDir = dirname(currentDir);
@@ -55,7 +48,7 @@ export async function loadConfig(
 
   if (!resolvedPath) {
     throw new Error(
-      "Could not find hermes.config.ts. Run 'hermes init' to create one."
+      "Could not find hermes.config.json. Run 'hermes init' to create one."
     );
   }
 
@@ -65,11 +58,8 @@ export async function loadConfig(
 
   logger.debug(`Loading config from: ${resolvedPath}`);
 
-  const { mod } = await bundleRequire({
-    filepath: resolvedPath,
-  });
-
-  const rawConfig: HermesConfig = mod.default ?? mod;
+  const fileContent = readFileSync(resolvedPath, "utf-8");
+  const rawConfig: HermesConfig = JSON.parse(fileContent);
 
   // Validate required fields
   validateConfig(rawConfig);
@@ -127,7 +117,9 @@ function resolveConfig(config: HermesConfig): ResolvedHermesConfig {
   return {
     ...config,
     exclude: config.exclude ?? DEFAULT_EXCLUDE_PATTERNS,
-    extractPattern: config.extractPattern ?? DEFAULT_EXTRACT_PATTERN,
+    extractPattern: config.extractPattern
+      ? new RegExp(config.extractPattern, "g")
+      : DEFAULT_EXTRACT_PATTERN,
     deepl: {
       apiKey: config.deepl?.apiKey ?? process.env.DEEPL_API_KEY ?? "",
       formality: config.deepl?.formality ?? DEFAULT_DEEPL_CONFIG.formality,
