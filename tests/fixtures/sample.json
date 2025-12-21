@@ -1,0 +1,7 @@
+{
+  "hello_world": "Hello World",
+  "greeting": "Hello, {name}!",
+  "simple_key": "Simple value",
+  "with_quotes": "He said \"Hello\"",
+  "multiline": "Line 1\nLine 2"
+}

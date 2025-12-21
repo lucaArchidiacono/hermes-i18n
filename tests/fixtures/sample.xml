@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Welcome message -->
+    <string name="hello_world">Hello World</string>
+    <!-- Greeting with placeholder -->
+    <string name="greeting">Hello, %s!</string>
+    <string name="simple_key">Simple value</string>
+    <string name="with_ampersand">Tom &amp; Jerry</string>
+</resources>

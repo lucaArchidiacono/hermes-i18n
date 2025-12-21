@@ -1,0 +1,48 @@
+{
+  "name": "hermes-i18n",
+  "version": "0.1.0",
+  "description": "CLI tool for extracting, syncing, and translating localization strings",
+  "type": "module",
+  "bin": {
+    "hermes": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target node",
+    "dev": "bun run ./src/index.ts",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest --coverage"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/google": "^1.0.0",
+    "@ai-sdk/mistral": "^1.0.0",
+    "@ai-sdk/openai": "^1.0.0",
+    "ai": "^4.0.0",
+    "bundle-require": "^5.0.0",
+    "commander": "^12.0.0",
+    "consola": "^3.2.0",
+    "deepl-node": "^1.14.0",
+    "esbuild": "^0.24.0",
+    "fast-xml-parser": "^4.5.0",
+    "glob": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.0",
+    "vitest": "^2.0.0"
+  },
+  "keywords": [
+    "i18n",
+    "localization",
+    "translation",
+    "cli",
+    "ios",
+    "android",
+    "strings",
+    "deepl",
+    "ai"
+  ],
+  "author": "",
+  "license": "MIT"
+}
