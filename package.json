@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target node",
+    "archive": "bun build src/index.ts --compile --outfile ./output/hermes-i18n",
     "dev": "bun run ./src/index.ts",
     "test": "vitest",
     "test:run": "vitest run",
