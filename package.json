@@ -6,13 +6,17 @@
   "bin": {
     "hermes": "./dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target node",
     "archive": "bun build src/index.ts --compile --outfile ./output/hermes-i18n",
     "dev": "bun run ./src/index.ts",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.0.0",
@@ -42,6 +46,17 @@
     "deepl",
     "ai"
   ],
-  "author": "",
-  "license": "MIT"
+  "author": "lucaArchidiacono",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucaArchidiacono/hermes-i18n.git"
+  },
+  "homepage": "https://github.com/lucaArchidiacono/hermes-i18n#readme",
+  "bugs": {
+    "url": "https://github.com/lucaArchidiacono/hermes-i18n/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }
