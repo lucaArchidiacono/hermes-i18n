@@ -173,7 +173,7 @@ export class DeepLService {
       // Use rate limiter to ensure we don't exceed API limits
       const result = await this.rateLimiter.execute(async () => {
         const translator = this.getTranslator();
-        await translator.translateText(
+        return await translator.translateText(
           text,
           sourceLang,
           targetLang as deepl.TargetLanguageCode,
