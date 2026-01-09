@@ -161,4 +161,116 @@ describe("XmlHandler", () => {
       }
     });
   });
+
+  describe("newline handling", () => {
+    it("should handle keys with newlines in attribute", async () => {
+      // Note: XML attributes with newlines are unusual but should be escaped
+      const entries = [
+        { key: "key_normal", value: "value" },
+      ];
+
+      await handler.write(tempFile, entries);
+      const readEntries = await handler.read(tempFile);
+
+      expect(readEntries.length).toBe(1);
+      expect(readEntries[0].key).toBe("key_normal");
+    });
+
+    it("should handle values with single newline", async () => {
+      const entries = [
+        { key: "single_newline", value: "before\nafter" },
+      ];
+
+      await handler.write(tempFile, entries);
+      const readEntries = await handler.read(tempFile);
+
+      expect(readEntries.length).toBe(1);
+      expect(readEntries[0].value).toBe("before\nafter");
+    });
+
+    it("should handle values with multiple newlines", async () => {
+      const entries = [
+        { key: "multiple_newlines", value: "line1\nline2\nline3\nline4" },
+      ];
+
+      await handler.write(tempFile, entries);
+      const readEntries = await handler.read(tempFile);
+
+      expect(readEntries.length).toBe(1);
+      expect(readEntries[0].value).toBe("line1\nline2\nline3\nline4");
+    });
+
+    it("should handle values with newlines at the start", async () => {
+      const entries = [
+        { key: "newline_start", value: "\nstarts with newline" },
+      ];
+
+      await handler.write(tempFile, entries);
+      const readEntries = await handler.read(tempFile);
+
+      expect(readEntries.length).toBe(1);
+      expect(readEntries[0].value).toBe("\nstarts with newline");
+    });
+
+    it("should handle values with newlines at the end", async () => {
+      const entries = [
+        { key: "newline_end", value: "ends with newline\n" },
+      ];
+
+      await handler.write(tempFile, entries);
+      const readEntries = await handler.read(tempFile);
+
+      expect(readEntries.length).toBe(1);
+      expect(readEntries[0].value).toBe("ends with newline\n");
+    });
+
+    it("should handle values with consecutive newlines", async () => {
+      const entries = [
+        { key: "consecutive_newlines", value: "paragraph1\n\n\nparagraph2" },
+      ];
+
+      await handler.write(tempFile, entries);
+      const readEntries = await handler.read(tempFile);
+
+      expect(readEntries.length).toBe(1);
+      expect(readEntries[0].value).toBe("paragraph1\n\n\nparagraph2");
+    });
+
+    it("should handle mixed special characters with newlines", async () => {
+      const entries = [
+        { key: "mixed_special", value: "Tom & Jerry\nSaid \"Hello\"" },
+      ];
+
+      await handler.write(tempFile, entries);
+      const readEntries = await handler.read(tempFile);
+
+      expect(readEntries.length).toBe(1);
+      expect(readEntries[0].value).toBe("Tom & Jerry\nSaid \"Hello\"");
+    });
+
+    it("should handle empty string value", async () => {
+      const entries = [
+        { key: "empty_value", value: "" },
+      ];
+
+      await handler.write(tempFile, entries);
+      const readEntries = await handler.read(tempFile);
+
+      expect(readEntries.length).toBe(1);
+      expect(readEntries[0].key).toBe("empty_value");
+      expect(readEntries[0].value).toBe("");
+    });
+
+    it("should handle newlines with XML entities", async () => {
+      const entries = [
+        { key: "newline_and_entities", value: "5 < 10\nAnd\n10 > 5" },
+      ];
+
+      await handler.write(tempFile, entries);
+      const readEntries = await handler.read(tempFile);
+
+      expect(readEntries.length).toBe(1);
+      expect(readEntries[0].value).toBe("5 < 10\nAnd\n10 > 5");
+    });
+  });
 });

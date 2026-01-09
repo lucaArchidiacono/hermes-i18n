@@ -79,7 +79,8 @@ export interface HermesConfig {
 /**
  * Resolved configuration with all defaults applied
  */
-export interface ResolvedHermesConfig extends Omit<HermesConfig, "extractPattern"> {
+export interface ResolvedHermesConfig
+  extends Omit<HermesConfig, "extractPattern"> {
   exclude: string[];
   extractPattern: RegExp;
   deepl: Required<DeepLConfig>;

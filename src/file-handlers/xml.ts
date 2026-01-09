@@ -111,10 +111,14 @@ export class XmlHandler implements FileHandler {
   }
 
   /**
-   * Escape special XML characters
+   * Escape special XML characters and Android-specific escapes
    */
   private escapeXml(str: string): string {
     return str
+      .replace(/\\/g, "\\\\")  // Escape backslashes first
+      .replace(/\n/g, "\\n")   // Escape newlines
+      .replace(/\r/g, "\\r")   // Escape carriage returns
+      .replace(/\t/g, "\\t")   // Escape tabs
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -123,7 +127,7 @@ export class XmlHandler implements FileHandler {
   }
 
   /**
-   * Unescape special XML characters
+   * Unescape special XML characters and Android-specific escapes
    */
   private unescapeXml(str: string): string {
     return str
@@ -133,6 +137,10 @@ export class XmlHandler implements FileHandler {
       .replace(/&apos;/g, "'")
       .replace(/&quot;/g, '"')
       .replace(/\\'/g, "'")
-      .replace(/\\"/g, '"');
+      .replace(/\\"/g, '"')
+      .replace(/\\n/g, "\n")   // Unescape newlines
+      .replace(/\\r/g, "\r")   // Unescape carriage returns
+      .replace(/\\t/g, "\t")   // Unescape tabs
+      .replace(/\\\\/g, "\\"); // Unescape backslashes last
   }
 }

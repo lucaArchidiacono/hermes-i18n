@@ -18,7 +18,9 @@ const CONFIG_FILE_NAME = "hermes.config.json";
 /**
  * Find the config file in the given directory or its parents
  */
-export function findConfigFile(startDir: string = process.cwd()): string | null {
+export function findConfigFile(
+  startDir: string = process.cwd()
+): string | null {
   let currentDir = resolve(startDir);
 
   while (true) {
@@ -42,9 +44,7 @@ export function findConfigFile(startDir: string = process.cwd()): string | null 
 export async function loadConfig(
   configPath?: string
 ): Promise<{ config: ResolvedHermesConfig; configDir: string }> {
-  const resolvedPath = configPath
-    ? resolve(configPath)
-    : findConfigFile();
+  const resolvedPath = configPath ? resolve(configPath) : findConfigFile();
 
   if (!resolvedPath) {
     throw new Error(
@@ -82,15 +82,21 @@ function validateConfig(config: HermesConfig): void {
   }
 
   if (!config.targetLanguages || config.targetLanguages.length === 0) {
-    throw new Error("Config error: 'targetLanguages' must have at least one language");
+    throw new Error(
+      "Config error: 'targetLanguages' must have at least one language"
+    );
   }
 
   if (!config.source?.path || !config.source?.type) {
-    throw new Error("Config error: 'source.path' and 'source.type' are required");
+    throw new Error(
+      "Config error: 'source.path' and 'source.type' are required"
+    );
   }
 
   if (!config.outputs || config.outputs.length === 0) {
-    throw new Error("Config error: 'outputs' must have at least one output configuration");
+    throw new Error(
+      "Config error: 'outputs' must have at least one output configuration"
+    );
   }
 
   for (const output of config.outputs) {
@@ -100,7 +106,9 @@ function validateConfig(config: HermesConfig): void {
   }
 
   if (!config.include || config.include.length === 0) {
-    throw new Error("Config error: 'include' must have at least one glob pattern");
+    throw new Error(
+      "Config error: 'include' must have at least one glob pattern"
+    );
   }
 
   if (!config.ai?.provider || !config.ai?.model) {
