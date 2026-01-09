@@ -61,7 +61,7 @@ export class XmlHandler implements FileHandler {
         /^<string\s+name="([^"]+)">(.*?)<\/string>$/
       );
       if (stringMatch) {
-        const key = stringMatch[1];
+        const key = this.unescapeXmlAttribute(stringMatch[1]);
         const value = this.unescapeXml(stringMatch[2]);
 
         entries.push({
@@ -100,14 +100,69 @@ export class XmlHandler implements FileHandler {
         lines.push(`    <!-- ${entry.comment} -->`);
       }
 
-      // Add string element
+      // Add string element - escape both key and value
+      const escapedKey = this.escapeXmlAttribute(entry.key);
       const escapedValue = this.escapeXml(entry.value);
-      lines.push(`    <string name="${entry.key}">${escapedValue}</string>`);
+      lines.push(`    <string name="${escapedKey}">${escapedValue}</string>`);
     }
 
     lines.push("</resources>");
 
     return lines.join("\n") + "\n";
+  }
+
+  /**
+   * Escape special characters for XML attribute values (like the name attribute)
+   * 
+   * Converts in-memory characters to their escape/entity representation:
+   * - XML entities: & → &amp;, < → &lt;, > → &gt;, " → &quot;
+   * - Actual newline (char code 10) → &#10;
+   * - Actual carriage return (char code 13) → &#13;
+   * - Actual tab (char code 9) → &#9;
+   */
+  private escapeXmlAttribute(str: string): string {
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+
+      if (char === "&") {
+        result += "&amp;";
+      } else if (char === "<") {
+        result += "&lt;";
+      } else if (char === ">") {
+        result += "&gt;";
+      } else if (char === '"') {
+        result += "&quot;";
+      } else if (char === "\n") {
+        result += "&#10;";
+      } else if (char === "\r") {
+        result += "&#13;";
+      } else if (char === "\t") {
+        result += "&#9;";
+      } else {
+        result += char;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Unescape special characters from XML attribute values
+   * 
+   * Converts XML entities and numeric character references to actual characters:
+   * - XML entities: &amp; → &, &lt; → <, &gt; → >, &quot; → ", &apos; → '
+   * - Numeric references: &#10; → newline, &#13; → CR, &#9; → tab
+   */
+  private unescapeXmlAttribute(str: string): string {
+    return str
+      .replace(/&#10;/g, "\n")
+      .replace(/&#13;/g, "\r")
+      .replace(/&#9;/g, "\t")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'");
   }
 
   /**
