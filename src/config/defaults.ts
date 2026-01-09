@@ -1,9 +1,24 @@
 import type { DeepLConfig, AIConfig } from "./types.js";
 
 /**
- * Default extraction pattern for _("key") function calls
+ * Default extraction pattern for _("key") function calls.
+ *
+ * Pattern breakdown: _\(\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*\)
+ * - _\(         - matches _( literally
+ * - \s*         - allows optional whitespace after opening paren (multi-line support)
+ * - "           - opening quote
+ * - ([^"\\]*(?:\\.[^"\\]*)*) - captures string content including escape sequences:
+ *   - [^"\\]*   - any chars except " and \
+ *   - (?:\\.[^"\\]*)* - followed by any number of: escape sequence + more chars
+ * - "           - closing quote
+ * - \s*\)       - optional whitespace before closing paren
+ *
+ * This pattern properly handles:
+ * - Multi-line function calls: _(\n  "text"\n)
+ * - Escape sequences in strings: _("Hello\nWorld")
+ * - Strings with escaped quotes: _("Say \"Hi\"")
  */
-export const DEFAULT_EXTRACT_PATTERN = /_\(["'`](.+?)["'`]\)/g;
+export const DEFAULT_EXTRACT_PATTERN = /_\(\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*\)/g;
 
 /**
  * Default exclude patterns

@@ -62,10 +62,70 @@ export class ExtractorStep implements PipelineStep {
     let match: RegExpExecArray | null;
     while ((match = regex.exec(content)) !== null) {
       if (match[1]) {
-        keys.push(match[1]);
+        // Process escape sequences to convert literal \n to actual newline, etc.
+        // This is necessary because the regex captures the raw text from the file,
+        // where \n is two characters (backslash + n), but semantically it represents
+        // a single newline character.
+        const processedKey = this.processEscapeSequences(match[1]);
+        keys.push(processedKey);
       }
     }
 
     return keys;
+  }
+
+  /**
+   * Process escape sequences in extracted keys.
+   * Converts literal escape sequences (like \n, \t, \r) to their actual character values.
+   *
+   * This is needed because when we extract tr("Hello\nWorld") from source code,
+   * the regex captures "Hello\nWorld" where \n is literally backslash + n (2 chars).
+   * But semantically, the developer intended a newline character (1 char).
+   *
+   * @param key - The raw extracted key with literal escape sequences
+   * @returns The key with escape sequences converted to actual characters
+   */
+  private processEscapeSequences(key: string): string {
+    let result = "";
+    for (let i = 0; i < key.length; i++) {
+      const char = key[i];
+      const nextChar = key[i + 1];
+
+      if (char === "\\" && nextChar !== undefined) {
+        switch (nextChar) {
+          case "n":
+            result += "\n";
+            i++;
+            break;
+          case "r":
+            result += "\r";
+            i++;
+            break;
+          case "t":
+            result += "\t";
+            i++;
+            break;
+          case '"':
+            result += '"';
+            i++;
+            break;
+          case "'":
+            result += "'";
+            i++;
+            break;
+          case "\\":
+            result += "\\";
+            i++;
+            break;
+          default:
+            // Unknown escape sequence - keep as-is
+            result += char;
+            break;
+        }
+      } else {
+        result += char;
+      }
+    }
+    return result;
   }
 }

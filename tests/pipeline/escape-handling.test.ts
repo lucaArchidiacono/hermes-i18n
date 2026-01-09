@@ -56,11 +56,11 @@ describe("Pipeline escape handling integration", () => {
     };
   }
 
-  describe("extractor captures raw escape sequences", () => {
-    it("should extract key with literal backslash-n from source code", async () => {
+  describe("extractor processes escape sequences", () => {
+    it("should process escape sequences in extracted keys", async () => {
       // Source code: tr("Hello\nWorld")
       // The file literally contains the characters: t, r, (, ", H, e, l, l, o, \, n, W, o, r, l, d, ", )
-      // The extractor should capture: Hello\nWorld (literal backslash + n, 12 chars)
+      // The extractor should process \n and return: Hello<newline>World (11 chars with actual newline)
       writeFileSync(codeFile, `let text = tr("Hello\\nWorld")`);
 
       const config = createConfig('tr\\(["\'](.+?)["\']\\)');
@@ -70,18 +70,16 @@ describe("Pipeline escape handling integration", () => {
       await extractor.execute(context);
 
       expect(context.extractedKeys.length).toBe(1);
-      // The extractor captures the RAW text from file: Hello\nWorld (literal backslash + n)
-      expect(context.extractedKeys[0]).toBe("Hello\\nWorld");
-      expect(context.extractedKeys[0].length).toBe(12); // NOT 11 (with actual newline)
+      // The extractor processes escape sequences: Hello\nWorld becomes Hello<newline>World
+      expect(context.extractedKeys[0]).toBe("Hello\nWorld");
+      expect(context.extractedKeys[0].length).toBe(11); // With actual newline (1 char, not 2)
     });
 
-    it("should extract multiline key pattern from user bug report", async () => {
-      // User's regex: tr\(["'`](.+?)["'`]\)
+    it("should process multiline key pattern correctly", async () => {
       // User's code: tr("Find public locations near you:\n- Parks\n...")
       const codeContent = `tr("Find public locations near you:\\n- Parks\\n- Public Toilets\\n- Bancomat\\n- And more...")`;
       writeFileSync(codeFile, codeContent);
 
-      // Use a pattern that matches the user's pattern: tr\(["'`](.+?)["'`]\)
       const config = createConfig("tr\\([\"'`](.+?)[\"'`]\\)");
       const context = createPipelineContext(config, testDir, true);
 
@@ -89,14 +87,14 @@ describe("Pipeline escape handling integration", () => {
       await extractor.execute(context);
 
       expect(context.extractedKeys.length).toBe(1);
-      // Raw extraction: literal \n characters (backslash + n)
-      expect(context.extractedKeys[0]).toContain("\\n");
+      // Extracted key has actual newlines (processed from \n)
+      expect(context.extractedKeys[0]).toContain("\n");
       expect(context.extractedKeys[0]).toBe(
-        "Find public locations near you:\\n- Parks\\n- Public Toilets\\n- Bancomat\\n- And more..."
+        "Find public locations near you:\n- Parks\n- Public Toilets\n- Bancomat\n- And more..."
       );
     });
 
-    it("should extract multiple keys with various escape sequences", async () => {
+    it("should process multiple keys with various escape sequences", async () => {
       writeFileSync(
         codeFile,
         `
@@ -114,21 +112,23 @@ let d = tr("simple")
       await extractor.execute(context);
 
       expect(context.extractedKeys.length).toBe(4);
-      expect(context.extractedKeys).toContain("line1\\nline2");
-      expect(context.extractedKeys).toContain("tab\\there");
-      expect(context.extractedKeys).toContain('quote\\"here\\"');
+      // All escape sequences are processed to actual characters
+      expect(context.extractedKeys).toContain("line1\nline2");
+      expect(context.extractedKeys).toContain("tab\there");
+      expect(context.extractedKeys).toContain('quote"here"');
       expect(context.extractedKeys).toContain("simple");
     });
   });
 
   describe("key matching between extractor and source file", () => {
-    it("should correctly match extracted key with source file entry (actual newlines)", async () => {
+    it("should correctly match extracted key with source file entry", async () => {
       // Scenario:
-      // - Source code has: tr("Hello\nWorld") -> extracted as "Hello\nWorld" (literal backslash + n)
+      // - Source code has: tr("Hello\nWorld") -> extractor processes \n to actual newline
       // - Source .strings file has: "Hello\nWorld" = "Hello\nWorld";
-      //   which when parsed becomes key with ACTUAL newline
+      //   which when parsed also becomes key with actual newline
+      // - Keys should match!
 
-      // Source code with literal \n
+      // Source code with literal \n (will be processed to actual newline)
       writeFileSync(codeFile, `let text = tr("Hello\\nWorld")`);
 
       // Source .strings file with escaped newline (which will be unescaped to actual newline)
@@ -140,22 +140,15 @@ let d = tr("simple")
       const extractor = new ExtractorStep();
       await extractor.execute(context);
 
-      // Extractor gets: Hello\nWorld (literal backslash + n, 12 chars)
-      expect(context.extractedKeys[0]).toBe("Hello\\nWorld");
-      expect(context.extractedKeys[0].length).toBe(12);
+      // Extractor processes \n to actual newline: Hello<newline>World (11 chars)
+      expect(context.extractedKeys[0]).toBe("Hello\nWorld");
+      expect(context.extractedKeys[0].length).toBe(11);
 
       const sourceSync = new SourceSyncStep();
       await sourceSync.execute(context);
 
-      // The bug: source file has key with ACTUAL newline (11 chars)
-      // while extractor has key with LITERAL backslash-n (12 chars)
-      // This causes a mismatch and new key is added
-
-      // After fix with normalization: no new keys should be added since key exists
-      // Before fix: newSourceKeys will have length 1 (bug!)
-
-      // This test documents the expected behavior AFTER the fix is applied
-      // Currently this test will FAIL, exposing the bug
+      // Both extractor and file handler produce keys with actual newlines
+      // so they should match and no new keys should be added
       expect(context.newSourceKeys.length).toBe(0);
     });
 
@@ -289,9 +282,9 @@ let d = tr("simple")
       await new SourceSyncStep().execute(context);
       await new MissingFinderStep().execute(context);
 
-      // Verify the key was extracted correctly
+      // Verify the key was extracted and processed correctly (escape sequences converted)
       expect(context.extractedKeys.length).toBe(1);
-      expect(context.extractedKeys[0]).toBe("Tab:\\there\\nNewline:\\nhere");
+      expect(context.extractedKeys[0]).toBe("Tab:\there\nNewline:\nhere");
 
       // Verify it was added to source
       expect(context.newSourceKeys.length).toBe(1);
