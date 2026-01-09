@@ -3,6 +3,7 @@ import type { LocalizationEntry } from "../../file-handlers/types.js";
 import { getFileHandler } from "../../file-handlers/registry.js";
 import { resolvePath } from "../../utils/fs.js";
 import { logger } from "../../utils/logger.js";
+import { hasKeyNormalized, findKeyNormalized } from "../../utils/strings.js";
 
 /**
  * Source sync step - ensures all extracted keys exist in the source file
@@ -27,10 +28,10 @@ export class SourceSyncStep implements PipelineStep {
 
     logger.info(`Source file has ${entriesMap.size} existing entries`);
 
-    // Find missing keys
+    // Find missing keys (using normalized comparison for escape sequence handling)
     const newKeys: string[] = [];
     for (const key of extractedKeys) {
-      if (!entriesMap.has(key)) {
+      if (!hasKeyNormalized(entriesMap, key)) {
         newKeys.push(key);
         // For source language, key = value
         entriesMap.set(key, { key, value: key });

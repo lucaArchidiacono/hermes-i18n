@@ -273,4 +273,209 @@ describe("XmlHandler", () => {
       expect(readEntries[0].value).toBe("5 < 10\nAnd\n10 > 5");
     });
   });
+
+  describe("escape sequence order - literal backslash handling", () => {
+    // ---- LITERAL BACKSLASH-N TESTS ----
+    describe("literal backslash-n", () => {
+      it("should correctly parse literal backslash-n from file", async () => {
+        const content = `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="test">hello\\\\nworld</string>
+</resources>`;
+        const entries = handler.parse(content);
+
+        expect(entries.length).toBe(1);
+        expect(entries[0].value).toBe("hello\\nworld");
+        expect(entries[0].value.length).toBe(12);
+      });
+
+      it("should correctly roundtrip literal backslash-n", async () => {
+        const entries = [{ key: "test", value: "hello\\nworld" }];
+
+        await handler.write(tempFile, entries);
+        const readEntries = await handler.read(tempFile);
+
+        expect(readEntries[0].value).toBe("hello\\nworld");
+      });
+
+      it("should handle mixed actual newlines and literal backslash-n", async () => {
+        const entries = [
+          { key: "mixed", value: "actual\nnewline and literal\\nbackslash-n" },
+        ];
+
+        await handler.write(tempFile, entries);
+        const readEntries = await handler.read(tempFile);
+
+        expect(readEntries[0].value).toBe("actual\nnewline and literal\\nbackslash-n");
+      });
+    });
+
+    // ---- LITERAL BACKSLASH-R TESTS ----
+    describe("literal backslash-r", () => {
+      it("should correctly parse literal backslash-r from file", async () => {
+        const content = `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="test">hello\\\\rworld</string>
+</resources>`;
+        const entries = handler.parse(content);
+
+        expect(entries[0].value).toBe("hello\\rworld");
+      });
+
+      it("should correctly roundtrip literal backslash-r", async () => {
+        const entries = [{ key: "test", value: "hello\\rworld" }];
+
+        await handler.write(tempFile, entries);
+        const readEntries = await handler.read(tempFile);
+
+        expect(readEntries[0].value).toBe("hello\\rworld");
+      });
+
+      it("should handle mixed actual carriage returns and literal backslash-r", async () => {
+        const entries = [
+          { key: "mixed", value: "actual\rreturn and literal\\rbackslash-r" },
+        ];
+
+        await handler.write(tempFile, entries);
+        const readEntries = await handler.read(tempFile);
+
+        expect(readEntries[0].value).toBe("actual\rreturn and literal\\rbackslash-r");
+      });
+    });
+
+    // ---- LITERAL BACKSLASH-T TESTS ----
+    describe("literal backslash-t", () => {
+      it("should correctly parse literal backslash-t from file", async () => {
+        const content = `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="test">hello\\\\tworld</string>
+</resources>`;
+        const entries = handler.parse(content);
+
+        expect(entries[0].value).toBe("hello\\tworld");
+      });
+
+      it("should correctly roundtrip literal backslash-t", async () => {
+        const entries = [{ key: "test", value: "hello\\tworld" }];
+
+        await handler.write(tempFile, entries);
+        const readEntries = await handler.read(tempFile);
+
+        expect(readEntries[0].value).toBe("hello\\tworld");
+      });
+
+      it("should handle mixed actual tabs and literal backslash-t", async () => {
+        const entries = [
+          { key: "mixed", value: "actual\ttab and literal\\tbackslash-t" },
+        ];
+
+        await handler.write(tempFile, entries);
+        const readEntries = await handler.read(tempFile);
+
+        expect(readEntries[0].value).toBe("actual\ttab and literal\\tbackslash-t");
+      });
+    });
+
+    // ---- LITERAL BACKSLASH-QUOTE TESTS ----
+    describe("literal backslash-quotes", () => {
+      it("should correctly roundtrip literal backslash-single-quote", async () => {
+        const entries = [{ key: "test", value: "say \\'hello\\'" }];
+
+        await handler.write(tempFile, entries);
+        const readEntries = await handler.read(tempFile);
+
+        expect(readEntries[0].value).toBe("say \\'hello\\'");
+      });
+
+      it("should correctly roundtrip literal backslash-double-quote", async () => {
+        const entries = [{ key: "test", value: 'say \\"hello\\"' }];
+
+        await handler.write(tempFile, entries);
+        const readEntries = await handler.read(tempFile);
+
+        expect(readEntries[0].value).toBe('say \\"hello\\"');
+      });
+    });
+
+    // ---- ESCAPE ACCUMULATION TESTS ----
+    describe("escape accumulation prevention", () => {
+      it("should not accumulate escaping on multiple write-read cycles", async () => {
+        const original = { key: "test", value: "line1\\nline2" };
+
+        await handler.write(tempFile, [original]);
+        let entries = await handler.read(tempFile);
+        expect(entries[0].value).toBe("line1\\nline2");
+
+        for (let i = 0; i < 5; i++) {
+          await handler.write(tempFile, entries);
+          entries = await handler.read(tempFile);
+          expect(entries[0].value).toBe("line1\\nline2");
+        }
+      });
+
+      it("should not accumulate escaping with all escape types", async () => {
+        const original = {
+          key: "test",
+          value: "literal\\n and \\r and \\t and \\'quote\\'",
+        };
+
+        await handler.write(tempFile, [original]);
+        let entries = await handler.read(tempFile);
+
+        for (let i = 0; i < 5; i++) {
+          await handler.write(tempFile, entries);
+          entries = await handler.read(tempFile);
+          expect(entries[0].value).toBe(original.value);
+        }
+      });
+
+      it("should not accumulate escaping with actual escape sequences", async () => {
+        const original = {
+          key: "test",
+          value: "actual\nnewline and literal\\nbackslash",
+        };
+
+        await handler.write(tempFile, [original]);
+        let entries = await handler.read(tempFile);
+
+        for (let i = 0; i < 5; i++) {
+          await handler.write(tempFile, entries);
+          entries = await handler.read(tempFile);
+          expect(entries[0].value).toBe(original.value);
+        }
+      });
+    });
+
+    // ---- COMPLEX COMBINATIONS WITH XML ENTITIES ----
+    describe("escape sequences with XML entities", () => {
+      it("should handle literal backslash-n with XML entities", async () => {
+        const entries = [{ key: "mixed", value: 'Tom & Jerry\\nsay "Hello"' }];
+
+        await handler.write(tempFile, entries);
+        const readEntries = await handler.read(tempFile);
+
+        expect(readEntries[0].value).toBe('Tom & Jerry\\nsay "Hello"');
+      });
+
+      it("should handle all escape types with XML entities", async () => {
+        const complexValue = "A < B & C > D\\nNew line\\there\\rreturn\\'quote\\'";
+
+        const entries = [{ key: "complex", value: complexValue }];
+
+        await handler.write(tempFile, entries);
+        const readEntries = await handler.read(tempFile);
+
+        expect(readEntries[0].value).toBe(complexValue);
+      });
+
+      it("should handle double backslash (literal backslash)", async () => {
+        const entries = [{ key: "path", value: "C:\\\\Users\\\\name" }];
+
+        await handler.write(tempFile, entries);
+        const readEntries = await handler.read(tempFile);
+
+        expect(readEntries[0].value).toBe("C:\\\\Users\\\\name");
+      });
+    });
+  });
 });

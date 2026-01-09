@@ -128,9 +128,12 @@ export class XmlHandler implements FileHandler {
 
   /**
    * Unescape special XML characters and Android-specific escapes
+   * IMPORTANT: Order matters! Process \\\\ first to avoid double-processing.
+   * For example: \\n in file should become \n (literal backslash + n), not an actual newline.
    */
   private unescapeXml(str: string): string {
     return str
+      .replace(/\\\\/g, "\0BACKSLASH\0") // Temporarily replace \\ to avoid conflicts
       .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">")
@@ -138,9 +141,9 @@ export class XmlHandler implements FileHandler {
       .replace(/&quot;/g, '"')
       .replace(/\\'/g, "'")
       .replace(/\\"/g, '"')
-      .replace(/\\n/g, "\n")   // Unescape newlines
-      .replace(/\\r/g, "\r")   // Unescape carriage returns
-      .replace(/\\t/g, "\t")   // Unescape tabs
-      .replace(/\\\\/g, "\\"); // Unescape backslashes last
+      .replace(/\\n/g, "\n")
+      .replace(/\\r/g, "\r")
+      .replace(/\\t/g, "\t")
+      .replace(/\0BACKSLASH\0/g, "\\"); // Restore single backslashes
   }
 }

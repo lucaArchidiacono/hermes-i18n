@@ -140,13 +140,16 @@ export class StringsHandler implements FileHandler {
 
   /**
    * Unescape special characters from .strings format
+   * IMPORTANT: Order matters! Process \\\\ first to avoid double-processing.
+   * For example: \\n in file should become \n (literal backslash + n), not an actual newline.
    */
   private unescapeString(str: string): string {
     return str
+      .replace(/\\\\/g, "\0BACKSLASH\0") // Temporarily replace \\ to avoid conflicts
       .replace(/\\n/g, "\n")
       .replace(/\\r/g, "\r")
       .replace(/\\t/g, "\t")
       .replace(/\\"/g, '"')
-      .replace(/\\\\/g, "\\");
+      .replace(/\0BACKSLASH\0/g, "\\"); // Restore single backslashes
   }
 }

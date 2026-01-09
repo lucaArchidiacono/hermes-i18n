@@ -3,6 +3,7 @@ import type { LocalizationEntry } from "../../file-handlers/types.js";
 import { getFileHandler } from "../../file-handlers/registry.js";
 import { resolvePath, replaceLanguagePlaceholder } from "../../utils/fs.js";
 import { logger } from "../../utils/logger.js";
+import { findKeyNormalized } from "../../utils/strings.js";
 
 /**
  * Missing finder step - identifies keys that need translation for each target language
@@ -39,8 +40,9 @@ export class MissingFinderStep implements PipelineStep {
       }
 
       // Find keys that are missing or have empty values
+      // Use normalized comparison for escape sequence handling
       for (const [key, sourceEntry] of sourceEntries) {
-        const existingEntry = langTranslations.existing.get(key);
+        const existingEntry = findKeyNormalized(langTranslations.existing, key);
 
         if (!existingEntry || existingEntry.value === "" || existingEntry.value === key) {
           // Key is missing or untranslated
