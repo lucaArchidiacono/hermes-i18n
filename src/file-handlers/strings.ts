@@ -128,28 +128,83 @@ export class StringsHandler implements FileHandler {
 
   /**
    * Escape special characters for .strings format
+   * 
+   * Converts in-memory characters to their escape sequence representation:
+   * - Actual newline (char code 10) → \n
+   * - Actual carriage return (char code 13) → \r
+   * - Actual tab (char code 9) → \t
+   * - Double quote → \"
+   * - Backslash → \\
    */
   private escapeString(str: string): string {
-    return str
-      .replace(/\\/g, "\\\\")
-      .replace(/"/g, '\\"')
-      .replace(/\n/g, "\\n")
-      .replace(/\r/g, "\\r")
-      .replace(/\t/g, "\\t");
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+
+      if (char === "\\") {
+        result += "\\\\";
+      } else if (char === '"') {
+        result += '\\"';
+      } else if (char === "\n") {
+        result += "\\n";
+      } else if (char === "\r") {
+        result += "\\r";
+      } else if (char === "\t") {
+        result += "\\t";
+      } else {
+        result += char;
+      }
+    }
+    return result;
   }
 
   /**
    * Unescape special characters from .strings format
-   * IMPORTANT: Order matters! Process \\\\ first to avoid double-processing.
-   * For example: \\n in file should become \n (literal backslash + n), not an actual newline.
+   * 
+   * Converts escape sequences to actual characters:
+   * - \n → actual newline (char code 10)
+   * - \r → actual carriage return (char code 13)
+   * - \t → actual tab (char code 9)
+   * - \" → "
+   * - \\ → single backslash
    */
   private unescapeString(str: string): string {
-    return str
-      .replace(/\\\\/g, "\0BACKSLASH\0") // Temporarily replace \\ to avoid conflicts
-      .replace(/\\n/g, "\n")
-      .replace(/\\r/g, "\r")
-      .replace(/\\t/g, "\t")
-      .replace(/\\"/g, '"')
-      .replace(/\0BACKSLASH\0/g, "\\"); // Restore single backslashes
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      const nextChar = str[i + 1];
+
+      if (char === "\\" && nextChar !== undefined) {
+        switch (nextChar) {
+          case "n":
+            result += "\n";
+            i++;
+            break;
+          case "r":
+            result += "\r";
+            i++;
+            break;
+          case "t":
+            result += "\t";
+            i++;
+            break;
+          case '"':
+            result += '"';
+            i++;
+            break;
+          case "\\":
+            result += "\\";
+            i++;
+            break;
+          default:
+            // Unknown escape sequence - keep as-is
+            result += char;
+            break;
+        }
+      } else {
+        result += char;
+      }
+    }
+    return result;
   }
 }

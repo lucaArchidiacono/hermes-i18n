@@ -112,38 +112,108 @@ export class XmlHandler implements FileHandler {
 
   /**
    * Escape special XML characters and Android-specific escapes
+   * 
+   * Converts in-memory characters to their escape/entity representation:
+   * - XML entities: & → &amp;, < → &lt;, > → &gt;
+   * - Actual newline (char code 10) → \n
+   * - Actual carriage return (char code 13) → \r
+   * - Actual tab (char code 9) → \t
+   * - Single quote → \'
+   * - Double quote → \"
+   * - Backslash → \\
    */
   private escapeXml(str: string): string {
-    return str
-      .replace(/\\/g, "\\\\")  // Escape backslashes first
-      .replace(/\n/g, "\\n")   // Escape newlines
-      .replace(/\r/g, "\\r")   // Escape carriage returns
-      .replace(/\t/g, "\\t")   // Escape tabs
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/'/g, "\\'")
-      .replace(/"/g, '\\"');
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+
+      if (char === "\\") {
+        result += "\\\\";
+      } else if (char === "&") {
+        result += "&amp;";
+      } else if (char === "<") {
+        result += "&lt;";
+      } else if (char === ">") {
+        result += "&gt;";
+      } else if (char === "'") {
+        result += "\\'";
+      } else if (char === '"') {
+        result += '\\"';
+      } else if (char === "\n") {
+        result += "\\n";
+      } else if (char === "\r") {
+        result += "\\r";
+      } else if (char === "\t") {
+        result += "\\t";
+      } else {
+        result += char;
+      }
+    }
+    return result;
   }
 
   /**
    * Unescape special XML characters and Android-specific escapes
-   * IMPORTANT: Order matters! Process \\\\ first to avoid double-processing.
-   * For example: \\n in file should become \n (literal backslash + n), not an actual newline.
+   * 
+   * Converts escape sequences/entities to actual characters:
+   * - XML entities: &amp; → &, &lt; → <, &gt; → >, &apos; → ', &quot; → "
+   * - \n → actual newline (char code 10)
+   * - \r → actual carriage return (char code 13)
+   * - \t → actual tab (char code 9)
+   * - \' → '
+   * - \" → "
+   * - \\ → single backslash
    */
   private unescapeXml(str: string): string {
-    return str
-      .replace(/\\\\/g, "\0BACKSLASH\0") // Temporarily replace \\ to avoid conflicts
+    // First handle XML entities
+    let result = str
       .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">")
       .replace(/&apos;/g, "'")
-      .replace(/&quot;/g, '"')
-      .replace(/\\'/g, "'")
-      .replace(/\\"/g, '"')
-      .replace(/\\n/g, "\n")
-      .replace(/\\r/g, "\r")
-      .replace(/\\t/g, "\t")
-      .replace(/\0BACKSLASH\0/g, "\\"); // Restore single backslashes
+      .replace(/&quot;/g, '"');
+
+    // Then handle backslash escapes character by character
+    let finalResult = "";
+    for (let i = 0; i < result.length; i++) {
+      const char = result[i];
+      const nextChar = result[i + 1];
+
+      if (char === "\\" && nextChar !== undefined) {
+        switch (nextChar) {
+          case "n":
+            finalResult += "\n";
+            i++;
+            break;
+          case "r":
+            finalResult += "\r";
+            i++;
+            break;
+          case "t":
+            finalResult += "\t";
+            i++;
+            break;
+          case "'":
+            finalResult += "'";
+            i++;
+            break;
+          case '"':
+            finalResult += '"';
+            i++;
+            break;
+          case "\\":
+            finalResult += "\\";
+            i++;
+            break;
+          default:
+            // Unknown escape sequence - keep as-is
+            finalResult += char;
+            break;
+        }
+      } else {
+        finalResult += char;
+      }
+    }
+    return finalResult;
   }
 }
