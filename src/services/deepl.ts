@@ -1,6 +1,7 @@
 import * as deepl from "deepl-node";
 import type { ResolvedHermesConfig } from "../config/types.js";
 import { logger } from "../utils/logger.js";
+import { RateLimiter } from "../utils/rate-limiter.js";
 
 /**
  * DeepL language codes that are supported
@@ -94,10 +95,13 @@ export class DeepLService {
   private translator: deepl.Translator | null = null;
   private apiKey: string;
   private formality: deepl.Formality;
+  private rateLimiter: RateLimiter;
 
   constructor(config: ResolvedHermesConfig["deepl"]) {
     this.apiKey = config.apiKey;
     this.formality = this.mapFormality(config.formality);
+    // DeepL API limit is 50 requests per second
+    this.rateLimiter = new RateLimiter(50);
   }
 
   /**
@@ -158,10 +162,13 @@ export class DeepLService {
     }
 
     try {
-      const translator = this.getTranslator();
-      const result = await translator.translateText(text, sourceLang, targetLang, {
-        formality: this.formality,
-        preserveFormatting: true,
+      // Use rate limiter to ensure we don't exceed API limits
+      const result = await this.rateLimiter.execute(async () => {
+        const translator = this.getTranslator();
+        return await translator.translateText(text, sourceLang, targetLang, {
+          formality: this.formality,
+          preserveFormatting: true,
+        });
       });
 
       return {
