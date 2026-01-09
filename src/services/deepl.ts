@@ -7,7 +7,7 @@ import { RateLimiter } from "../utils/rate-limiter.js";
  * DeepL language codes that are supported
  * Note: DeepL uses different codes for some languages
  */
-const DEEPL_LANGUAGE_MAP: Record<string, deepl.TargetLanguageCode> = {
+const DEEPL_LANGUAGE_MAP: Record<string, string> = {
   // Direct mappings
   bg: "bg",
   cs: "cs",
@@ -36,6 +36,14 @@ const DEEPL_LANGUAGE_MAP: Record<string, deepl.TargetLanguageCode> = {
   tr: "tr",
   uk: "uk",
   zh: "zh",
+  he: "he",
+  "zh-hans": "zh-HANS",
+  "zh-hant": "zh-HANT",
+  hi: "hi",
+  sr: "sr",
+  hr: "hr",
+  sq: "sq",
+  bs: "bs",
   // Special cases
   "en-us": "en-US",
   "en-gb": "en-GB",
@@ -165,10 +173,16 @@ export class DeepLService {
       // Use rate limiter to ensure we don't exceed API limits
       const result = await this.rateLimiter.execute(async () => {
         const translator = this.getTranslator();
-        return await translator.translateText(text, sourceLang, targetLang, {
-          formality: this.formality,
-          preserveFormatting: true,
-        });
+        await translator.translateText(
+          text,
+          sourceLang,
+          targetLang as deepl.TargetLanguageCode,
+          {
+            formality: this.formality,
+            preserveFormatting: true,
+            modelType: "quality_optimized",
+          }
+        );
       });
 
       return {
@@ -197,7 +211,7 @@ export class DeepLService {
   /**
    * Map our language code to DeepL target language code
    */
-  private mapTargetLanguage(lang: string): deepl.TargetLanguageCode | null {
+  private mapTargetLanguage(lang: string): string | null {
     const normalized = lang.toLowerCase();
     return DEEPL_LANGUAGE_MAP[normalized] ?? null;
   }
