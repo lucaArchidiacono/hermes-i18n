@@ -28,12 +28,10 @@ export class SourceSyncStep implements PipelineStep {
 
     logger.info(`Source file has ${entriesMap.size} existing entries`);
 
-    // Find missing keys (using normalized comparison for escape sequence handling)
     const newKeys: string[] = [];
     for (const key of extractedKeys) {
       if (!hasKeyNormalized(entriesMap, key)) {
         newKeys.push(key);
-        // For source language, key = value
         entriesMap.set(key, { key, value: key });
       }
     }
@@ -42,7 +40,6 @@ export class SourceSyncStep implements PipelineStep {
       logger.info(`Adding ${newKeys.length} new keys to source file`);
 
       if (!dryRun) {
-        // Write updated entries (sorted by key for consistency)
         const sortedEntries = Array.from(entriesMap.values()).sort((a, b) =>
           a.key.localeCompare(b.key)
         );

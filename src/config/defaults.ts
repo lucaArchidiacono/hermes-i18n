@@ -1,24 +1,43 @@
 import type { DeepLConfig, AIConfig } from "./types.js";
 
 /**
- * Default extraction pattern for _("key") function calls.
+ * Extraction pattern for _("key"), _('key'), and _(`key`) function calls.
  *
- * Pattern breakdown: _\(\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*\)
+ * Pattern breakdown: _\(\s*(?:"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)'|`([^`\\]*(?:\\.[^`\\]*)*)`)\s*\)
+ *
+ * Structure:
  * - _\(         - matches _( literally
- * - \s*         - allows optional whitespace after opening paren (multi-line support)
- * - "           - opening quote
- * - ([^"\\]*(?:\\.[^"\\]*)*) - captures string content including escape sequences:
- *   - [^"\\]*   - any chars except " and \
- *   - (?:\\.[^"\\]*)* - followed by any number of: escape sequence + more chars
- * - "           - closing quote
+ * - \s*         - allows optional whitespace after opening paren
+ * - (?:...|...|...) - non-capturing group with three alternatives:
+ *
+ *   Alternative 1 (double quotes):
+ *   - "           - opening double quote
+ *   - ([^"\\]*(?:\\.[^"\\]*)*) - capture group 1: string content
+ *     - [^"\\]*   - any chars except " and \
+ *     - (?:\\.[^"\\]*)* - followed by any number of: escape sequence (\.) + more chars
+ *   - "           - closing double quote
+ *
+ *   Alternative 2 (single quotes):
+ *   - '           - opening single quote
+ *   - ([^'\\]*(?:\\.[^'\\]*)*) - capture group 2: string content (same logic)
+ *   - '           - closing single quote
+ *
+ *   Alternative 3 (backticks):
+ *   - `           - opening backtick
+ *   - ([^`\\]*(?:\\.[^`\\]*)*) - capture group 3: string content (same logic)
+ *   - `           - closing backtick
+ *
  * - \s*\)       - optional whitespace before closing paren
  *
  * This pattern properly handles:
  * - Multi-line function calls: _(\n  "text"\n)
- * - Escape sequences in strings: _("Hello\nWorld")
- * - Strings with escaped quotes: _("Say \"Hi\"")
+ * - Escape sequences: _("Hello\nWorld"), _('path\\to\\file')
+ * - Escaped quotes: _("Say \"Hi\""), _('It\'s fine')
+ * - Special characters: _("Price: $100"), _(`Value: ${escaped}`)
+ * - Mixed content: _("Special: $var \n \t \" ' `")
  */
-export const DEFAULT_EXTRACT_PATTERN = /_\(\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*\)/g;
+export const DEFAULT_EXTRACT_PATTERN =
+  /_\(\s*(?:"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)'|`([^`\\]*(?:\\.[^`\\]*)*)`)\s*\)/g;
 
 /**
  * Default exclude patterns

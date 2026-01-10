@@ -1,6 +1,9 @@
 import type { FileHandler, LocalizationEntry } from "./types.js";
 import { readFileOrNull, writeFileSafe } from "../utils/fs.js";
 
+const KEY_VALUE_PAIR_REGEX =
+  /"([^"\\]*(?:\\.[^"\\]*)*)"\s*=\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*;/g;
+
 /**
  * Handler for iOS Localizable.strings files
  *
@@ -32,76 +35,12 @@ export class StringsHandler implements FileHandler {
    */
   parse(content: string): LocalizationEntry[] {
     const entries: LocalizationEntry[] = [];
-    const lines = content.split("\n");
 
-    let currentComment: string | undefined;
-    let i = 0;
-
-    while (i < lines.length) {
-      const line = lines[i].trim();
-
-      // Skip empty lines
-      if (line === "") {
-        i++;
-        continue;
-      }
-
-      // Single-line comment: /* comment */
-      const singleLineComment = line.match(/^\/\*\s*(.*?)\s*\*\/$/);
-      if (singleLineComment) {
-        currentComment = singleLineComment[1];
-        i++;
-        continue;
-      }
-
-      // Multi-line comment start: /*
-      if (line.startsWith("/*") && !line.endsWith("*/")) {
-        const commentLines: string[] = [];
-        // Remove /* from start
-        const firstLine = line.slice(2).trim();
-        if (firstLine) {
-          commentLines.push(firstLine);
-        }
-        i++;
-
-        // Read until */
-        while (i < lines.length && !lines[i].includes("*/")) {
-          commentLines.push(lines[i].trim());
-          i++;
-        }
-
-        // Handle the closing line
-        if (i < lines.length) {
-          const closingLine = lines[i].replace("*/", "").trim();
-          if (closingLine) {
-            commentLines.push(closingLine);
-          }
-        }
-
-        currentComment = commentLines.join(" ").trim();
-        i++;
-        continue;
-      }
-
-      // Key-value pair: "key" = "value";
-      const kvMatch = line.match(/^"(.+?)"\s*=\s*"(.*?)"\s*;?\s*$/);
-      if (kvMatch) {
-        const key = this.unescapeString(kvMatch[1]);
-        const value = this.unescapeString(kvMatch[2]);
-
-        entries.push({
-          key,
-          value,
-          comment: currentComment,
-        });
-
-        currentComment = undefined;
-        i++;
-        continue;
-      }
-
-      // Skip unrecognized lines
-      i++;
+    let match;
+    while ((match = KEY_VALUE_PAIR_REGEX.exec(content)) !== null) {
+      const key = match[1];
+      const value = match[2];
+      entries.push({ key, value });
     }
 
     return entries;
@@ -114,13 +53,9 @@ export class StringsHandler implements FileHandler {
     const lines: string[] = [];
 
     for (const entry of entries) {
-      if (entry.comment) {
-        lines.push(`/* ${entry.comment} */`);
-      }
       const escapedKey = this.escapeString(entry.key);
       const escapedValue = this.escapeString(entry.value);
       lines.push(`"${escapedKey}" = "${escapedValue}";`);
-      lines.push(""); // Empty line between entries
     }
 
     return lines.join("\n");
@@ -128,7 +63,7 @@ export class StringsHandler implements FileHandler {
 
   /**
    * Escape special characters for .strings format
-   * 
+   *
    * Converts in-memory characters to their escape sequence representation:
    * - Actual newline (char code 10) → \n
    * - Actual carriage return (char code 13) → \r
@@ -137,74 +72,12 @@ export class StringsHandler implements FileHandler {
    * - Backslash → \\
    */
   private escapeString(str: string): string {
-    let result = "";
-    for (let i = 0; i < str.length; i++) {
-      const char = str[i];
-
-      if (char === "\\") {
-        result += "\\\\";
-      } else if (char === '"') {
-        result += '\\"';
-      } else if (char === "\n") {
-        result += "\\n";
-      } else if (char === "\r") {
-        result += "\\r";
-      } else if (char === "\t") {
-        result += "\\t";
-      } else {
-        result += char;
-      }
-    }
-    return result;
-  }
-
-  /**
-   * Unescape special characters from .strings format
-   * 
-   * Converts escape sequences to actual characters:
-   * - \n → actual newline (char code 10)
-   * - \r → actual carriage return (char code 13)
-   * - \t → actual tab (char code 9)
-   * - \" → "
-   * - \\ → single backslash
-   */
-  private unescapeString(str: string): string {
-    let result = "";
-    for (let i = 0; i < str.length; i++) {
-      const char = str[i];
-      const nextChar = str[i + 1];
-
-      if (char === "\\" && nextChar !== undefined) {
-        switch (nextChar) {
-          case "n":
-            result += "\n";
-            i++;
-            break;
-          case "r":
-            result += "\r";
-            i++;
-            break;
-          case "t":
-            result += "\t";
-            i++;
-            break;
-          case '"':
-            result += '"';
-            i++;
-            break;
-          case "\\":
-            result += "\\";
-            i++;
-            break;
-          default:
-            // Unknown escape sequence - keep as-is
-            result += char;
-            break;
-        }
-      } else {
-        result += char;
-      }
-    }
-    return result;
+    str
+      .replace(/\\/g, "\\\\") // backslashes first!
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, "\\n")
+      .replace(/\r/g, "\\r")
+      .replace(/\t/g, "\\t");
+    return str;
   }
 }

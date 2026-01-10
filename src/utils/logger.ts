@@ -6,7 +6,6 @@ import { consola, createConsola } from "consola";
  */
 export const logger = createConsola({
   level: 3, // info level by default
-  fancy: true,
   formatOptions: {
     date: false,
     colors: true,

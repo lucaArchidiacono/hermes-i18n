@@ -8,8 +8,6 @@ export interface LocalizationEntry {
   key: string;
   /** The translated/source value */
   value: string;
-  /** Optional comment for context */
-  comment?: string;
 }
 
 /**
