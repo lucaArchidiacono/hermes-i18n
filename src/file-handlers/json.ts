@@ -1,6 +1,6 @@
 import type { FileHandler, LocalizationEntry } from "./types.js";
 import { readFileOrNull, writeFileSafe } from "../utils/fs.js";
-import { normalize } from "@/utils/strings.js";
+import { escape, normalize, unescape } from "@/utils/strings.js";
 import { logger } from "@/utils/logger.js";
 
 /**
@@ -46,9 +46,7 @@ export class JsonHandler implements FileHandler {
 
       for (const [key, value] of Object.entries(data)) {
         if (typeof value === "string") {
-          const normalizedKey = normalize(key);
-          const normalizedValue = normalize(value);
-          entries.push({ key: normalizedKey, value: normalizedValue });
+          entries.push({ key: normalize(key), value: normalize(value) });
         } else {
           logger.error(`Invalid JSON value for key: ${key}`, {
             key,
@@ -70,9 +68,7 @@ export class JsonHandler implements FileHandler {
     const data: Record<string, string> = {};
 
     for (const entry of entries) {
-      const normalizedKey = normalize(entry.key);
-      const normalizedValue = normalize(entry.value);
-      data[normalizedKey] = normalizedValue;
+      data[unescape(normalize(entry.key))] = unescape(normalize(entry.value));
     }
 
     return JSON.stringify(data, null, 2) + "\n";

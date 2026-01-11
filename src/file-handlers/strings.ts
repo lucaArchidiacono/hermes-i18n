@@ -40,10 +40,8 @@ export class StringsHandler implements FileHandler {
     let match;
     while ((match = KEY_VALUE_PAIR_REGEX.exec(content)) !== null) {
       const key = match[1];
-      const normalizedKey = normalize(key);
       const value = match[2];
-      const normalizedValue = normalize(value);
-      entries.push({ key: normalizedKey, value: normalizedValue });
+      entries.push({ key: normalize(key), value: normalize(value) });
     }
 
     return entries;
@@ -56,9 +54,11 @@ export class StringsHandler implements FileHandler {
     const lines: string[] = [];
 
     for (const entry of entries) {
-      const normalizedKey = normalize(entry.key);
-      const normalizedValue = normalize(entry.value);
-      lines.push(`"${normalizedKey}" = "${normalizedValue}";`);
+      lines.push(
+        `"${unescape(normalize(entry.key))}" = "${unescape(
+          normalize(entry.value)
+        )}";`
+      );
     }
 
     return lines.join("\n");
