@@ -1,6 +1,6 @@
 import type { FileHandler, LocalizationEntry } from "./types.js";
 import { readFileOrNull, writeFileSafe } from "../utils/fs.js";
-import { escape, normalize, unescape } from "@/utils/strings.js";
+import { normalize, unescape } from "@/utils/strings.js";
 import { logger } from "@/utils/logger.js";
 
 /**
@@ -68,7 +68,9 @@ export class JsonHandler implements FileHandler {
     const data: Record<string, string> = {};
 
     for (const entry of entries) {
-      data[unescape(normalize(entry.key))] = unescape(normalize(entry.value));
+      const key = unescape(normalize(entry.key));
+      const value = unescape(normalize(entry.value));
+      data[key] = value;
     }
 
     return JSON.stringify(data, null, 2) + "\n";

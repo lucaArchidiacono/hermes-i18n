@@ -54,11 +54,9 @@ export class StringsHandler implements FileHandler {
     const lines: string[] = [];
 
     for (const entry of entries) {
-      lines.push(
-        `"${unescape(normalize(entry.key))}" = "${unescape(
-          normalize(entry.value)
-        )}";`
-      );
+      const key = normalize(entry.key);
+      const value = normalize(entry.value);
+      lines.push(`"${key}" = "${value}";`);
     }
 
     return lines.join("\n");
