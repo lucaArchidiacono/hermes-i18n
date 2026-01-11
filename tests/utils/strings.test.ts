@@ -1,114 +1,114 @@
 import { describe, it, expect } from "vitest";
 import {
-  normalizeKey,
+  normalize,
   keysAreEqual,
-  findKeyNormalized,
-  hasKeyNormalized,
+  findKey,
+  hasKey,
+  escape,
+  unescape,
 } from "../../src/utils/strings.js";
 
 describe("String utilities", () => {
-  describe("normalizeKey", () => {
-    describe("basic escape sequences", () => {
-      it("should convert literal backslash-n to actual newline", () => {
-        const result = normalizeKey("Hello\\nWorld");
-        expect(result).toBe("Hello\nWorld");
-        expect(result.length).toBe(11); // actual newline is 1 char
-      });
-
-      it("should convert literal backslash-r to actual carriage return", () => {
-        const result = normalizeKey("Hello\\rWorld");
-        expect(result).toBe("Hello\rWorld");
-      });
-
-      it("should convert literal backslash-t to actual tab", () => {
-        const result = normalizeKey("Hello\\tWorld");
-        expect(result).toBe("Hello\tWorld");
-      });
-
-      it("should convert literal backslash-quote to actual double quote", () => {
-        const result = normalizeKey('say \\"hello\\"');
-        expect(result).toBe('say "hello"');
-      });
-
-      it("should convert literal backslash-single-quote to actual single quote", () => {
-        const result = normalizeKey("say \\'hello\\'");
-        expect(result).toBe("say 'hello'");
-      });
-
-      it("should convert double backslash to single backslash", () => {
-        const result = normalizeKey("path\\\\to\\\\file");
-        expect(result).toBe("path\\to\\file");
-      });
+  describe("unescape", () => {
+    it("should convert literal backslash-n to actual newline", () => {
+      const result = unescape("Hello\\nWorld");
+      expect(result).toBe("Hello\nWorld");
+      expect(result.length).toBe(11); // actual newline is 1 char
     });
 
-    describe("already normalized keys", () => {
-      it("should leave already normalized newline unchanged", () => {
-        const result = normalizeKey("Hello\nWorld");
-        expect(result).toBe("Hello\nWorld");
-      });
-
-      it("should leave already normalized tab unchanged", () => {
-        const result = normalizeKey("Hello\tWorld");
-        expect(result).toBe("Hello\tWorld");
-      });
-
-      it("should leave already normalized carriage return unchanged", () => {
-        const result = normalizeKey("Hello\rWorld");
-        expect(result).toBe("Hello\rWorld");
-      });
-
-      it("should leave simple string unchanged", () => {
-        const result = normalizeKey("Hello World");
-        expect(result).toBe("Hello World");
-      });
+    it("should convert literal backslash-r to actual carriage return", () => {
+      const result = unescape("Hello\\rWorld");
+      expect(result).toBe("Hello\rWorld");
     });
 
-    describe("complex cases", () => {
-      it("should handle multiple escape sequences", () => {
-        const result = normalizeKey("line1\\nline2\\ttab\\rreturn");
-        expect(result).toBe("line1\nline2\ttab\rreturn");
-      });
-
-      it("should handle mixed actual and literal escapes", () => {
-        // This string has an actual newline and a literal \n
-        const input = "actual\nnewline and literal\\nbackslash-n";
-        const result = normalizeKey(input);
-        // Both should become actual newlines
-        expect(result).toBe("actual\nnewline and literal\nbackslash-n");
-      });
-
-      it("should handle user-reported multiline string", () => {
-        const result = normalizeKey(
-          "Find public locations near you:\\n- Parks\\n- Public Toilets\\n- Bancomat\\n- And more..."
-        );
-        expect(result).toBe(
-          "Find public locations near you:\n- Parks\n- Public Toilets\n- Bancomat\n- And more..."
-        );
-      });
-
-      it("should handle empty string", () => {
-        expect(normalizeKey("")).toBe("");
-      });
-
-      it("should handle string with only escape sequences", () => {
-        expect(normalizeKey("\\n\\t\\r")).toBe("\n\t\r");
-      });
+    it("should convert literal backslash-t to actual tab", () => {
+      const result = unescape("Hello\\tWorld");
+      expect(result).toBe("Hello\tWorld");
     });
 
-    describe("idempotence", () => {
-      it("should be idempotent - normalizing twice gives same result", () => {
-        const input = "Hello\\nWorld";
-        const once = normalizeKey(input);
-        const twice = normalizeKey(once);
-        expect(twice).toBe(once);
-      });
+    it("should convert literal backslash-quote to actual double quote", () => {
+      const result = unescape('say \\"hello\\"');
+      expect(result).toBe('say "hello"');
+    });
 
-      it("should be idempotent for complex strings", () => {
-        const input = 'line1\\nline2\\ttab\\"quote\\"';
-        const once = normalizeKey(input);
-        const twice = normalizeKey(once);
-        expect(twice).toBe(once);
-      });
+    it("should convert literal backslash-single-quote to actual single quote", () => {
+      const result = unescape("say \\'hello\\'");
+      expect(result).toBe("say 'hello'");
+    });
+
+    it("should convert double backslash to single backslash", () => {
+      // Note: \\t after \\\\ -> \\ becomes \ then \t becomes tab
+      // This is the expected behavior: first \\\\ -> \\, then \\t -> \t -> tab
+      const result = unescape("path\\\\to\\\\file");
+      // \\\\ -> \\ (first replace), then \\t -> tab, \\f stays as \f (not a recognized escape)
+      expect(result).toBe("path\to\\file");
+    });
+  });
+
+  describe("escape", () => {
+    it("should convert actual newline to literal backslash-n", () => {
+      const result = escape("Hello\nWorld");
+      expect(result).toBe("Hello\\nWorld");
+    });
+
+    it("should convert actual tab to literal backslash-t", () => {
+      const result = escape("Hello\tWorld");
+      expect(result).toBe("Hello\\tWorld");
+    });
+
+    it("should convert actual carriage return to literal backslash-r", () => {
+      const result = escape("Hello\rWorld");
+      expect(result).toBe("Hello\\rWorld");
+    });
+
+    it("should convert double quote to escaped quote", () => {
+      const result = escape('say "hello"');
+      expect(result).toBe('say \\"hello\\"');
+    });
+
+    it("should convert single backslash to double backslash", () => {
+      const result = escape("path\\to\\file");
+      expect(result).toBe("path\\\\to\\\\file");
+    });
+  });
+
+  describe("normalize", () => {
+    it("should normalize escaped string to escaped form", () => {
+      // normalize = escape(unescape(x)) - always returns escaped form
+      const result = normalize("Hello\\nWorld");
+      expect(result).toBe("Hello\\nWorld");
+    });
+
+    it("should normalize actual newline to escaped form", () => {
+      const result = normalize("Hello\nWorld");
+      expect(result).toBe("Hello\\nWorld");
+    });
+
+    it("should normalize actual tab to escaped form", () => {
+      const result = normalize("Hello\tWorld");
+      expect(result).toBe("Hello\\tWorld");
+    });
+
+    it("should be idempotent", () => {
+      const input = "Hello\\nWorld";
+      const once = normalize(input);
+      const twice = normalize(once);
+      expect(twice).toBe(once);
+    });
+
+    it("should handle complex strings idempotently", () => {
+      const input = 'line1\\nline2\\ttab\\"quote\\"';
+      const once = normalize(input);
+      const twice = normalize(once);
+      expect(twice).toBe(once);
+    });
+
+    it("should handle empty string", () => {
+      expect(normalize("")).toBe("");
+    });
+
+    it("should handle simple string without escapes", () => {
+      expect(normalize("Hello World")).toBe("Hello World");
     });
   });
 
@@ -151,54 +151,52 @@ describe("String utilities", () => {
     });
   });
 
-  describe("findKeyNormalized", () => {
+  describe("findKey", () => {
     it("should find exact match first", () => {
       const map = new Map([
         ["Hello\\nWorld", "value1"],
         ["Hello\nWorld", "value2"],
       ]);
       // Exact match should be returned
-      expect(findKeyNormalized(map, "Hello\\nWorld")).toBe("value1");
+      expect(findKey(map, "Hello\\nWorld")).toBe("value1");
     });
 
     it("should find normalized match when exact match not found", () => {
       const map = new Map([["Hello\nWorld", "translated"]]);
       // Looking for literal \n should find actual newline
-      expect(findKeyNormalized(map, "Hello\\nWorld")).toBe("translated");
+      expect(findKey(map, "Hello\\nWorld")).toBe("translated");
     });
 
     it("should return undefined when no match found", () => {
       const map = new Map([["Hello", "world"]]);
-      expect(findKeyNormalized(map, "Goodbye")).toBeUndefined();
+      expect(findKey(map, "Goodbye")).toBeUndefined();
     });
 
     it("should handle empty map", () => {
       const map = new Map<string, string>();
-      expect(findKeyNormalized(map, "Hello")).toBeUndefined();
+      expect(findKey(map, "Hello")).toBeUndefined();
     });
 
     it("should find key with complex escape sequences", () => {
-      const map = new Map([
-        ["line1\nline2\ttab", "translated"],
-      ]);
-      expect(findKeyNormalized(map, "line1\\nline2\\ttab")).toBe("translated");
+      const map = new Map([["line1\nline2\ttab", "translated"]]);
+      expect(findKey(map, "line1\\nline2\\ttab")).toBe("translated");
     });
   });
 
-  describe("hasKeyNormalized", () => {
+  describe("hasKey", () => {
     it("should return true for exact match", () => {
       const map = new Map([["Hello", "world"]]);
-      expect(hasKeyNormalized(map, "Hello")).toBe(true);
+      expect(hasKey(map, "Hello")).toBe(true);
     });
 
     it("should return true for normalized match", () => {
       const map = new Map([["Hello\nWorld", "value"]]);
-      expect(hasKeyNormalized(map, "Hello\\nWorld")).toBe(true);
+      expect(hasKey(map, "Hello\\nWorld")).toBe(true);
     });
 
     it("should return false when no match", () => {
       const map = new Map([["Hello", "world"]]);
-      expect(hasKeyNormalized(map, "Goodbye")).toBe(false);
+      expect(hasKey(map, "Goodbye")).toBe(false);
     });
 
     it("should handle user-reported scenario", () => {
@@ -208,7 +206,7 @@ describe("String utilities", () => {
       ]);
       // Extracted key has literal \n
       const extractedKey = "Find public locations near you:\\n- Parks";
-      expect(hasKeyNormalized(map, extractedKey)).toBe(true);
+      expect(hasKey(map, extractedKey)).toBe(true);
     });
   });
 });

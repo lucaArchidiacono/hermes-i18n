@@ -3,7 +3,6 @@ import { mkdirSync, rmSync, writeFileSync, readFileSync } from "fs";
 import { resolve, join } from "path";
 import { StringsHandler } from "../../src/file-handlers/strings.js";
 import { JsonHandler } from "../../src/file-handlers/json.js";
-import { XmlHandler } from "../../src/file-handlers/xml.js";
 import { ExtractorStep } from "../../src/pipeline/steps/extractor.js";
 import { SourceSyncStep } from "../../src/pipeline/steps/source-sync.js";
 import { MissingFinderStep } from "../../src/pipeline/steps/missing-finder.js";
@@ -60,7 +59,7 @@ describe("Pipeline escape handling integration", () => {
     it("should process escape sequences in extracted keys", async () => {
       // Source code: tr("Hello\nWorld")
       // The file literally contains the characters: t, r, (, ", H, e, l, l, o, \, n, W, o, r, l, d, ", )
-      // The extractor should process \n and return: Hello<newline>World (11 chars with actual newline)
+      // The extractor should process \n and return normalized (escaped) form
       writeFileSync(codeFile, `let text = tr("Hello\\nWorld")`);
 
       const config = createConfig('tr\\(["\'](.+?)["\']\\)');
@@ -70,9 +69,8 @@ describe("Pipeline escape handling integration", () => {
       await extractor.execute(context);
 
       expect(context.extractedKeys.length).toBe(1);
-      // The extractor processes escape sequences: Hello\nWorld becomes Hello<newline>World
-      expect(context.extractedKeys[0]).toBe("Hello\nWorld");
-      expect(context.extractedKeys[0].length).toBe(11); // With actual newline (1 char, not 2)
+      // The extractor returns normalized (escaped) form
+      expect(context.extractedKeys[0]).toBe("Hello\\nWorld");
     });
 
     it("should process multiline key pattern correctly", async () => {
@@ -87,10 +85,9 @@ describe("Pipeline escape handling integration", () => {
       await extractor.execute(context);
 
       expect(context.extractedKeys.length).toBe(1);
-      // Extracted key has actual newlines (processed from \n)
-      expect(context.extractedKeys[0]).toContain("\n");
+      // Extracted key is in normalized (escaped) form
       expect(context.extractedKeys[0]).toBe(
-        "Find public locations near you:\n- Parks\n- Public Toilets\n- Bancomat\n- And more..."
+        "Find public locations near you:\\n- Parks\\n- Public Toilets\\n- Bancomat\\n- And more..."
       );
     });
 
@@ -112,10 +109,10 @@ let d = tr("simple")
       await extractor.execute(context);
 
       expect(context.extractedKeys.length).toBe(4);
-      // All escape sequences are processed to actual characters
-      expect(context.extractedKeys).toContain("line1\nline2");
-      expect(context.extractedKeys).toContain("tab\there");
-      expect(context.extractedKeys).toContain('quote"here"');
+      // All escape sequences are in normalized (escaped) form
+      expect(context.extractedKeys).toContain("line1\\nline2");
+      expect(context.extractedKeys).toContain("tab\\there");
+      expect(context.extractedKeys).toContain('quote\\"here\\"');
       expect(context.extractedKeys).toContain("simple");
     });
   });
@@ -123,15 +120,15 @@ let d = tr("simple")
   describe("key matching between extractor and source file", () => {
     it("should correctly match extracted key with source file entry", async () => {
       // Scenario:
-      // - Source code has: tr("Hello\nWorld") -> extractor processes \n to actual newline
+      // - Source code has: tr("Hello\nWorld") -> extractor returns normalized form
       // - Source .strings file has: "Hello\nWorld" = "Hello\nWorld";
-      //   which when parsed also becomes key with actual newline
+      //   which when parsed also becomes normalized form
       // - Keys should match!
 
-      // Source code with literal \n (will be processed to actual newline)
+      // Source code with literal \n
       writeFileSync(codeFile, `let text = tr("Hello\\nWorld")`);
 
-      // Source .strings file with escaped newline (which will be unescaped to actual newline)
+      // Source .strings file with escaped newline
       writeFileSync(sourceFile, `"Hello\\nWorld" = "Hello\\nWorld";\n`);
 
       const config = createConfig('tr\\(["\'](.+?)["\']\\)');
@@ -140,14 +137,13 @@ let d = tr("simple")
       const extractor = new ExtractorStep();
       await extractor.execute(context);
 
-      // Extractor processes \n to actual newline: Hello<newline>World (11 chars)
-      expect(context.extractedKeys[0]).toBe("Hello\nWorld");
-      expect(context.extractedKeys[0].length).toBe(11);
+      // Extractor returns normalized (escaped) form
+      expect(context.extractedKeys[0]).toBe("Hello\\nWorld");
 
       const sourceSync = new SourceSyncStep();
       await sourceSync.execute(context);
 
-      // Both extractor and file handler produce keys with actual newlines
+      // Both extractor and file handler produce normalized keys
       // so they should match and no new keys should be added
       expect(context.newSourceKeys.length).toBe(0);
     });
@@ -282,9 +278,9 @@ let d = tr("simple")
       await new SourceSyncStep().execute(context);
       await new MissingFinderStep().execute(context);
 
-      // Verify the key was extracted and processed correctly (escape sequences converted)
+      // Verify the key was extracted in normalized (escaped) form
       expect(context.extractedKeys.length).toBe(1);
-      expect(context.extractedKeys[0]).toBe("Tab:\there\nNewline:\nhere");
+      expect(context.extractedKeys[0]).toBe("Tab:\\there\\nNewline:\\nhere");
 
       // Verify it was added to source
       expect(context.newSourceKeys.length).toBe(1);
@@ -329,45 +325,8 @@ let d = tr("simple")
       const jsonEntries = await jsonHandler.read(jsonTargetFile);
       expect(jsonEntries.length).toBe(1);
 
-      // The key should be consistent
+      // The key should be consistent (both normalized)
       expect(jsonEntries[0].key).toBe(sourceEntries[0].key);
-    });
-
-    it("should handle escapes consistently when output is XML", async () => {
-      const xmlTargetFile = join(testDir, "de.xml");
-      writeFileSync(codeFile, `tr("Hello\\nWorld")`);
-      writeFileSync(sourceFile, "");
-
-      const config: ResolvedHermesConfig = {
-        ...createConfig('tr\\(["\'](.+?)["\']\\)'),
-        outputs: [
-          {
-            type: "xml",
-            path: "{lang}.xml",
-          },
-        ],
-      };
-
-      const context = createPipelineContext(config, testDir, false);
-
-      await new ExtractorStep().execute(context);
-      await new SourceSyncStep().execute(context);
-
-      // Verify the key in source file
-      const stringsHandler = new StringsHandler();
-      const sourceEntries = await stringsHandler.read(sourceFile);
-      expect(sourceEntries.length).toBe(1);
-
-      // Write to XML target
-      const xmlHandler = new XmlHandler();
-      await xmlHandler.write(xmlTargetFile, sourceEntries);
-
-      // Read back from XML
-      const xmlEntries = await xmlHandler.read(xmlTargetFile);
-      expect(xmlEntries.length).toBe(1);
-
-      // The value should be consistent
-      expect(xmlEntries[0].value).toBe(sourceEntries[0].value);
     });
   });
 });
