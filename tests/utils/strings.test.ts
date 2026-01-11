@@ -26,12 +26,13 @@ describe("String utilities", () => {
       expect(result).toBe("Hello\tWorld");
     });
 
-    it("should convert literal backslash-quote to actual double quote", () => {
+    it("should convert literal backslash-double-quote to actual double quote", () => {
       const result = unescape('say \\"hello\\"');
       expect(result).toBe('say "hello"');
     });
 
     it("should convert literal backslash-single-quote to actual single quote", () => {
+      // \' is unescaped to ' (we don't escape single quotes, but we unescape them for compatibility)
       const result = unescape("say \\'hello\\'");
       expect(result).toBe("say 'hello'");
     });
@@ -61,9 +62,15 @@ describe("String utilities", () => {
       expect(result).toBe("Hello\\rWorld");
     });
 
-    it("should convert double quote to escaped quote", () => {
+    it("should escape double quote", () => {
       const result = escape('say "hello"');
       expect(result).toBe('say \\"hello\\"');
+    });
+
+    it("should NOT escape single quote", () => {
+      // Single quotes are left as-is, not escaped
+      const result = escape("say 'hello'");
+      expect(result).toBe("say 'hello'");
     });
 
     it("should convert single backslash to double backslash", () => {
