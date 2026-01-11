@@ -1,5 +1,6 @@
 import type { FileHandler, LocalizationEntry } from "./types.js";
 import { readFileOrNull, writeFileSafe } from "../utils/fs.js";
+import { normalize } from "@/utils/strings.js";
 
 const KEY_VALUE_PAIR_REGEX =
   /"([^"\\]*(?:\\.[^"\\]*)*)"\s*=\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*;/g;
@@ -39,8 +40,10 @@ export class StringsHandler implements FileHandler {
     let match;
     while ((match = KEY_VALUE_PAIR_REGEX.exec(content)) !== null) {
       const key = match[1];
+      const normalizedKey = normalize(key);
       const value = match[2];
-      entries.push({ key, value });
+      const normalizedValue = normalize(value);
+      entries.push({ key: normalizedKey, value: normalizedValue });
     }
 
     return entries;
@@ -53,31 +56,11 @@ export class StringsHandler implements FileHandler {
     const lines: string[] = [];
 
     for (const entry of entries) {
-      const escapedKey = this.escapeString(entry.key);
-      const escapedValue = this.escapeString(entry.value);
-      lines.push(`"${escapedKey}" = "${escapedValue}";`);
+      const normalizedKey = normalize(entry.key);
+      const normalizedValue = normalize(entry.value);
+      lines.push(`"${normalizedKey}" = "${normalizedValue}";`);
     }
 
     return lines.join("\n");
-  }
-
-  /**
-   * Escape special characters for .strings format
-   *
-   * Converts in-memory characters to their escape sequence representation:
-   * - Actual newline (char code 10) → \n
-   * - Actual carriage return (char code 13) → \r
-   * - Actual tab (char code 9) → \t
-   * - Double quote → \"
-   * - Backslash → \\
-   */
-  private escapeString(str: string): string {
-    str
-      .replace(/\\/g, "\\\\") // backslashes first!
-      .replace(/"/g, '\\"')
-      .replace(/\n/g, "\\n")
-      .replace(/\r/g, "\\r")
-      .replace(/\t/g, "\\t");
-    return str;
   }
 }

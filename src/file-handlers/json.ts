@@ -1,5 +1,7 @@
 import type { FileHandler, LocalizationEntry } from "./types.js";
 import { readFileOrNull, writeFileSafe } from "../utils/fs.js";
+import { normalize } from "@/utils/strings.js";
+import { logger } from "@/utils/logger.js";
 
 /**
  * Handler for JSON localization files
@@ -44,17 +46,14 @@ export class JsonHandler implements FileHandler {
 
       for (const [key, value] of Object.entries(data)) {
         if (typeof value === "string") {
-          entries.push({ key, value });
-        } else if (typeof value === "object" && value !== null) {
-          // Support for nested format with value and comment
-          const obj = value as Record<string, unknown>;
-          if (typeof obj.value === "string") {
-            entries.push({
-              key,
-              value: obj.value,
-              comment: typeof obj.comment === "string" ? obj.comment : undefined,
-            });
-          }
+          const normalizedKey = normalize(key);
+          const normalizedValue = normalize(value);
+          entries.push({ key: normalizedKey, value: normalizedValue });
+        } else {
+          logger.error(`Invalid JSON value for key: ${key}`, {
+            key,
+            value,
+          });
         }
       }
 
@@ -71,7 +70,9 @@ export class JsonHandler implements FileHandler {
     const data: Record<string, string> = {};
 
     for (const entry of entries) {
-      data[entry.key] = entry.value;
+      const normalizedKey = normalize(entry.key);
+      const normalizedValue = normalize(entry.value);
+      data[normalizedKey] = normalizedValue;
     }
 
     return JSON.stringify(data, null, 2) + "\n";

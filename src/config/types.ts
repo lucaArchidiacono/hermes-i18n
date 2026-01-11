@@ -1,7 +1,7 @@
 /**
  * File type for localization files
  */
-export type FileType = "strings" | "json" | "xml";
+export type FileType = "strings" | "json";
 
 /**
  * Supported AI providers via Vercel AI SDK

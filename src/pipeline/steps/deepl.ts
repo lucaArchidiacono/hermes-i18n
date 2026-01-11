@@ -1,6 +1,11 @@
-import type { PipelineStep, PipelineContext, TranslationResult } from "../types.js";
+import type {
+  PipelineStep,
+  PipelineContext,
+  TranslationResult,
+} from "../types.js";
 import { DeepLService } from "../../services/deepl.js";
 import { logger } from "../../utils/logger.js";
+import { normalize, unescape } from "@/utils/strings.js";
 
 /**
  * DeepL translation step - translates missing entries using DeepL API
@@ -14,7 +19,9 @@ export class DeepLStep implements PipelineStep {
     const service = new DeepLService(config.deepl);
 
     if (!service.isConfigured()) {
-      logger.warn("DeepL API key not configured, skipping DeepL translation step");
+      logger.warn(
+        "DeepL API key not configured, skipping DeepL translation step"
+      );
       return context;
     }
 
@@ -23,49 +30,59 @@ export class DeepLStep implements PipelineStep {
         continue;
       }
 
-      logger.info(`[${language}] Translating ${langTranslations.missing.size} keys via DeepL...`);
+      logger.info(
+        `[${language}] Translating ${langTranslations.missing.size} keys via DeepL...`
+      );
 
       // Process translations sequentially (not concurrent)
       for (const [key, sourceValue] of langTranslations.missing) {
+        const normalizedKey = normalize(key);
+        const normalizedSourceValue = normalize(sourceValue);
+
         context.translationsAttempted++;
 
         const result = await service.translate(
-          sourceValue,
+          unescape(normalizedSourceValue),
           config.sourceLanguage,
           language
         );
 
         const translationResult: TranslationResult = {
-          key,
-          sourceValue,
+          key: normalizedKey,
+          sourceValue: normalizedSourceValue,
           targetLanguage: language,
-          finalValue: sourceValue, // Default to source value
+          finalValue: normalizedSourceValue,
           status: "failed",
         };
 
         if (result.success && result.translation) {
-          translationResult.deeplResult = result.translation;
-          translationResult.finalValue = result.translation;
+          const normalizedTranslation = normalize(result.translation);
+          translationResult.deeplResult = normalizedTranslation;
+          translationResult.finalValue = normalizedTranslation;
           translationResult.status = "deepl_only";
-          logger.debug(`[${language}] Translated: "${key}"`);
+          logger.debug(`[${language}] Translated: "${normalizedKey}"`);
         } else if (result.skipped) {
           translationResult.error = result.skipReason;
-          logger.debug(`[${language}] Skipped: "${key}" - ${result.skipReason}`);
+          logger.debug(
+            `[${language}] Skipped: "${normalizedKey}" - ${result.skipReason}`
+          );
         } else {
           translationResult.error = result.error;
           context.translationsFailed++;
-          logger.debug(`[${language}] Failed: "${key}" - ${result.error}`);
+          logger.debug(
+            `[${language}] Failed: "${normalizedKey}" - ${result.error}`
+          );
 
           // Add to errors
           context.errors.push({
             step: this.name,
             message: result.error ?? "Unknown error",
-            key,
+            key: normalizedKey,
             language,
           });
         }
 
-        langTranslations.results.set(key, translationResult);
+        langTranslations.results.set(normalizedKey, translationResult);
       }
     }
 

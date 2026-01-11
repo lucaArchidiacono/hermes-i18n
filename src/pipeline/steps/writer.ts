@@ -3,6 +3,7 @@ import type { LocalizationEntry } from "../../file-handlers/types.js";
 import { getFileHandler } from "../../file-handlers/registry.js";
 import { resolvePath, replaceLanguagePlaceholder } from "../../utils/fs.js";
 import { logger } from "../../utils/logger.js";
+import { normalize } from "@/utils/strings.js";
 
 /**
  * Writer step - writes translated entries to output files
@@ -22,20 +23,24 @@ export class WriterStep implements PipelineStep {
       // Add successful translations
       for (const [key, result] of langTranslations.results) {
         if (result.status !== "failed") {
-          mergedEntries.set(key, {
-            key,
-            value: result.finalValue,
+          const normalizedKey = normalize(key);
+          const normalizedValue = normalize(result.finalValue);
+          mergedEntries.set(normalizedKey, {
+            key: normalizedKey,
+            value: normalizedValue,
           });
         }
       }
 
       // Ensure all source keys exist (even if translation failed)
       for (const [key, sourceEntry] of sourceEntries) {
-        if (!mergedEntries.has(key)) {
+        const normalizedKey = normalize(key);
+        if (!mergedEntries.has(normalizedKey)) {
           // Keep the source value as placeholder
-          mergedEntries.set(key, {
-            key,
-            value: sourceEntry.value,
+          const normalizedValue = normalize(sourceEntry.value);
+          mergedEntries.set(normalizedKey, {
+            key: normalizedKey,
+            value: normalizedValue,
           });
         }
       }
@@ -55,9 +60,13 @@ export class WriterStep implements PipelineStep {
         if (!dryRun) {
           const handler = getFileHandler(output.type);
           await handler.write(outputPath, sortedEntries);
-          logger.success(`Wrote ${sortedEntries.length} entries to: ${outputPath}`);
+          logger.success(
+            `Wrote ${sortedEntries.length} entries to: ${outputPath}`
+          );
         } else {
-          logger.info(`[DRY RUN] Would write ${sortedEntries.length} entries to: ${outputPath}`);
+          logger.info(
+            `[DRY RUN] Would write ${sortedEntries.length} entries to: ${outputPath}`
+          );
         }
       }
     }

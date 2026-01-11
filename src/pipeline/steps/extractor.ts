@@ -3,6 +3,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import type { PipelineStep, PipelineContext } from "../types.js";
 import { logger } from "../../utils/logger.js";
+import { normalize } from "@/utils/strings.js";
 
 /**
  * Extractor step - scans source code for translation keys
@@ -62,8 +63,9 @@ export class ExtractorStep implements PipelineStep {
     let match: RegExpExecArray | null;
     while ((match = regex.exec(content)) !== null) {
       if (match[1]) {
-        logger.debug(`Found key: ${JSON.stringify(match[1])}`);
-        keys.push(match[1]);
+        const normalizedKey = normalize(match[1]);
+        logger.debug(`Found key: ${normalizedKey}`);
+        keys.push(normalizedKey);
       }
     }
 
