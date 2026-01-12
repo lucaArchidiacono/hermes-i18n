@@ -5,8 +5,8 @@ export function unescape(key: string): string {
     .replace(/\\n/g, "\n")
     .replace(/\\r/g, "\r")
     .replace(/\\t/g, "\t")
-    .replace(/\\"/g, '"')
-    .replace(/\\'/g, "'");
+    .replace(/\"/g, '"')
+    .replace(/\'/g, "'");
 }
 
 // prettier-ignore
@@ -16,7 +16,8 @@ export function escape(key: string): string {
     .replace(/\n/g, "\\n")
     .replace(/\r/g, "\\r")
     .replace(/\t/g, "\\t")
-    .replace(/"/g, '\\"');
+    .replace(/"/g, '\"')
+    .replace(/'/g, "\'");
 }
 
 export function normalize(key: string): string {

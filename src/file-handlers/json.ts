@@ -68,11 +68,20 @@ export class JsonHandler implements FileHandler {
     const data: Record<string, string> = {};
 
     for (const entry of entries) {
-      const key = unescape(normalize(entry.key));
-      const value = unescape(normalize(entry.value));
+      const key = unescapeJson(normalize(entry.key));
+      const value = unescapeJson(normalize(entry.value));
       data[key] = value;
     }
 
     return JSON.stringify(data, null, 2) + "\n";
   }
+}
+
+function unescapeJson(value: string): string {
+  return value
+    .replace(/\\\\/g, "\\")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t")
+    .replace(/\\'/g, "'");
 }

@@ -54,11 +54,21 @@ export class StringsHandler implements FileHandler {
     const lines: string[] = [];
 
     for (const entry of entries) {
-      const key = normalize(entry.key);
-      const value = normalize(entry.value);
+      const key = unescapeStrings(normalize(entry.key));
+      const value = unescapeStrings(normalize(entry.value));
       lines.push(`"${key}" = "${value}";`);
     }
 
     return lines.join("\n");
   }
+}
+
+// prettier-ignore
+function unescapeStrings(key: string): string {
+  return key
+    .replace(/\\\\/g, "\\")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t")
+    .replace(/\'/g, "'");
 }
