@@ -5,7 +5,7 @@ import type {
 } from "../types.js";
 import { DeepLService } from "../../services/deepl.js";
 import { logger } from "../../utils/logger.js";
-import { normalize, unescape } from "@/utils/strings.js";
+import { normalize, unescape } from "../../utils/strings.js";
 
 /**
  * DeepL translation step - translates missing entries using DeepL API

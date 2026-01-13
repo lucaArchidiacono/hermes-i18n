@@ -97,7 +97,7 @@ describe("Pipeline escape handling integration", () => {
         `
 let a = tr("line1\\nline2")
 let b = tr("tab\\there")
-let c = tr("quote\\"here\\"")
+let c = tr("cr\\rhere")
 let d = tr("simple")
 `
       );
@@ -112,7 +112,7 @@ let d = tr("simple")
       // All escape sequences are in normalized (escaped) form
       expect(context.extractedKeys).toContain("line1\\nline2");
       expect(context.extractedKeys).toContain("tab\\there");
-      expect(context.extractedKeys).toContain('quote\\"here\\"');
+      expect(context.extractedKeys).toContain("cr\\rhere");
       expect(context.extractedKeys).toContain("simple");
     });
   });

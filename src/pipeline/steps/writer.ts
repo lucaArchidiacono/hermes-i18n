@@ -3,7 +3,7 @@ import type { LocalizationEntry } from "../../file-handlers/types.js";
 import { getFileHandler } from "../../file-handlers/registry.js";
 import { resolvePath, replaceLanguagePlaceholder } from "../../utils/fs.js";
 import { logger } from "../../utils/logger.js";
-import { normalize } from "@/utils/strings.js";
+import { normalize } from "../../utils/strings.js";
 
 /**
  * Writer step - writes translated entries to output files

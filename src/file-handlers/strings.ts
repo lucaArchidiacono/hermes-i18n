@@ -1,6 +1,6 @@
 import type { FileHandler, LocalizationEntry } from "./types.js";
 import { readFileOrNull, writeFileSafe } from "../utils/fs.js";
-import { normalize } from "@/utils/strings.js";
+import { normalize } from "../utils/strings.js";
 
 const KEY_VALUE_PAIR_REGEX =
   /"([^"\\]*(?:\\.[^"\\]*)*)"\s*=\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*;/g;
