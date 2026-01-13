@@ -1,7 +1,7 @@
 import type { PipelineStep, PipelineContext } from "../types.js";
 import { AIService } from "../../services/ai.js";
 import { logger } from "../../utils/logger.js";
-import { normalize, unescape } from "@/utils/strings.js";
+import { normalize, unescape } from "../../utils/strings.js";
 
 /**
  * AI refinement step - refines translations using AI

@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import type { PipelineStep, PipelineContext } from "../types.js";
 import { logger } from "../../utils/logger.js";
-import { normalize } from "@/utils/strings.js";
+import { normalize } from "../../utils/strings.js";
 
 /**
  * Extractor step - scans source code for translation keys
