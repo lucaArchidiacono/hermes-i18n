@@ -26,14 +26,15 @@ describe("String utilities", () => {
       expect(result).toBe("Hello\tWorld");
     });
 
-    it("should convert literal backslash-double-quote to actual double quote", () => {
-      const result = unescape('say \\"hello\\"');
+    it("should NOT unescape quotes (quotes are literal)", () => {
+      // Quotes are no longer escaped/unescaped - they pass through as-is
+      const result = unescape('say "hello"');
       expect(result).toBe('say "hello"');
     });
 
-    it("should convert literal backslash-single-quote to actual single quote", () => {
-      // \' is unescaped to ' (we don't escape single quotes, but we unescape them for compatibility)
-      const result = unescape("say \\'hello\\'");
+    it("should NOT unescape single quotes (quotes are literal)", () => {
+      // Single quotes pass through as-is
+      const result = unescape("say 'hello'");
       expect(result).toBe("say 'hello'");
     });
 
@@ -62,12 +63,13 @@ describe("String utilities", () => {
       expect(result).toBe("Hello\\rWorld");
     });
 
-    it("should escape double quote", () => {
+    it("should NOT escape double quote (quotes are literal)", () => {
+      // Double quotes are no longer escaped - they pass through as-is
       const result = escape('say "hello"');
-      expect(result).toBe('say \\"hello\\"');
+      expect(result).toBe('say "hello"');
     });
 
-    it("should NOT escape single quote", () => {
+    it("should NOT escape single quote (quotes are literal)", () => {
       // Single quotes are left as-is, not escaped
       const result = escape("say 'hello'");
       expect(result).toBe("say 'hello'");
@@ -104,7 +106,7 @@ describe("String utilities", () => {
     });
 
     it("should handle complex strings idempotently", () => {
-      const input = 'line1\\nline2\\ttab\\"quote\\"';
+      const input = 'line1\\nline2\\ttab"quote"';
       const once = normalize(input);
       const twice = normalize(once);
       expect(twice).toBe(once);

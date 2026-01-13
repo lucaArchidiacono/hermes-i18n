@@ -42,8 +42,8 @@ describe("JsonHandler", () => {
       const entries = await handler.read(sampleFile);
 
       const quotesEntry = entries.find((e) => e.key === "with_quotes");
-      // Returns literal \" (backslash + quote)
-      expect(quotesEntry?.value).toBe('He said \\"Hello\\"');
+      // Returns literal " (actual double quote inside string)
+      expect(quotesEntry?.value).toBe('He said "Hello"');
     });
 
     it("should return literal escape sequences for newlines", async () => {
@@ -97,23 +97,25 @@ describe("JsonHandler", () => {
       expect(content.endsWith("\n")).toBe(true);
     });
 
-    it("should properly escape sequences in JSON output", async () => {
-      // Input has literal escape sequences (\ followed by ", etc.)
+    it("should preserve literal escape sequences in JSON output", async () => {
       const entries = [
-        { key: "quotes", value: 'He said \\"Hello\\"' },
+        { key: "quotes", value: 'He said "Hello"' },
         { key: "newline", value: "Line 1\\nLine 2" },
         { key: "backslash", value: "folder\\\\subfolder" },
       ];
 
       await handler.write(tempFile, entries);
+      const readEntries = await handler.read(tempFile);
 
-      const content = readFileSync(tempFile, "utf-8");
-      const parsed = JSON.parse(content);
-
-      // All escape sequences are unescaped to actual characters for JSON
-      expect(parsed.quotes).toBe('He said "Hello"');
-      expect(parsed.newline).toBe("Line 1\nLine 2");
-      expect(parsed.backslash).toBe("folder\\subfolder");
+      expect(readEntries.find((e) => e.key === "quotes")?.value).toBe(
+        'He said "Hello"'
+      );
+      expect(readEntries.find((e) => e.key === "newline")?.value).toBe(
+        "Line 1\\nLine 2"
+      );
+      expect(readEntries.find((e) => e.key === "backslash")?.value).toBe(
+        "folder\\\\subfolder"
+      );
     });
 
     it("should create parent directories if needed", async () => {
@@ -152,7 +154,7 @@ describe("JsonHandler", () => {
       // Input uses literal escape sequences
       const originalEntries = [
         { key: "key1", value: "Value 1" },
-        { key: "key2", value: 'Value with \\"quotes\\"' },
+        { key: "key2", value: 'Value with "quotes"' },
         { key: "key3", value: "Multi\\nLine" },
         { key: "key4", value: "Placeholder: {name}" },
       ];
@@ -245,14 +247,14 @@ describe("JsonHandler", () => {
 
     it("should handle mixed literal escape sequences", async () => {
       const entries = [
-        { key: "mixed_special", value: 'He said \\"Hello\\"\\nAnd left' },
+        { key: "mixed_special", value: 'He said "Hello"\\nAnd left' },
       ];
 
       await handler.write(tempFile, entries);
       const readEntries = await handler.read(tempFile);
 
       expect(readEntries.length).toBe(1);
-      expect(readEntries[0].value).toBe('He said \\"Hello\\"\\nAnd left');
+      expect(readEntries[0].value).toBe('He said "Hello"\\nAnd left');
     });
 
     it("should handle literal \\n, \\t, and \\\\ sequences", async () => {
@@ -331,7 +333,7 @@ describe("JsonHandler", () => {
       it("should not accumulate escaping with all escape types", async () => {
         const original = {
           key: "test",
-          value: 'newline\\n and tab\\t and \\"quote\\"',
+          value: 'newline\\n and tab\\t and "quote"',
         };
 
         await handler.write(tempFile, [original]);
@@ -348,7 +350,7 @@ describe("JsonHandler", () => {
     describe("complex escape combinations", () => {
       it("should handle all escape types in one string", async () => {
         const complexValue =
-          'tab:\\there, newline:\\nhere, cr:\\rhere, quote:\\"here\\", backslash:\\\\here';
+          'tab:\\there, newline:\\nhere, cr:\\rhere, quote:"here", backslash:\\\\here';
 
         const entries = [{ key: "complex", value: complexValue }];
 

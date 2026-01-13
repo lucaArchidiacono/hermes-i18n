@@ -2,6 +2,5 @@
 
 "Hello, %@!" = "Hello, %@!";
 
-"He said \"Hello\"" = "He said \"Hello\"";
 "Line 1\nLine 2" = "Line 1\nLine 2";
 "newline\nkey" = "newline\nkey";

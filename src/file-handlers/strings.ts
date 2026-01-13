@@ -1,6 +1,6 @@
 import type { FileHandler, LocalizationEntry } from "./types.js";
 import { readFileOrNull, writeFileSafe } from "../utils/fs.js";
-import { normalize } from "@/utils/strings.js";
+import { normalize } from "../utils/strings.js";
 
 const KEY_VALUE_PAIR_REGEX =
   /"([^"\\]*(?:\\.[^"\\]*)*)"\s*=\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*;/g;
@@ -54,21 +54,11 @@ export class StringsHandler implements FileHandler {
     const lines: string[] = [];
 
     for (const entry of entries) {
-      const key = unescapeStrings(normalize(entry.key));
-      const value = unescapeStrings(normalize(entry.value));
+      const key = normalize(entry.key);
+      const value = normalize(entry.value);
       lines.push(`"${key}" = "${value}";`);
     }
 
     return lines.join("\n");
   }
-}
-
-// prettier-ignore
-function unescapeStrings(key: string): string {
-  return key
-    .replace(/\\\\/g, "\\")
-    .replace(/\\n/g, "\n")
-    .replace(/\\r/g, "\r")
-    .replace(/\\t/g, "\t")
-    .replace(/\'/g, "'");
 }
