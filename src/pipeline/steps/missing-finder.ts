@@ -50,8 +50,7 @@ export class MissingFinderStep implements PipelineStep {
 
         if (
           !existingEntry ||
-          existingEntry.value === "" ||
-          existingEntry.value === sourceKey
+          existingEntry.value === ""
         ) {
           langTranslations.missing.set(sourceKey, sourceEntry.value);
         }
