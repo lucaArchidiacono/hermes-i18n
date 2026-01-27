@@ -1,4 +1,4 @@
-import type { DeepLConfig, AIConfig } from "./types.js";
+import type { DeepLConfig, GoogleTranslateConfig, AIConfig, TranslationProvider } from "./types.js";
 
 /**
  * Extraction pattern for _("key"), _('key'), and _(`key`) function calls.
@@ -50,6 +50,11 @@ export const DEFAULT_EXCLUDE_PATTERNS = [
 ];
 
 /**
+ * Default translation provider
+ */
+export const DEFAULT_TRANSLATOR: TranslationProvider = "deepl";
+
+/**
  * Default DeepL configuration
  */
 export const DEFAULT_DEEPL_CONFIG: Required<DeepLConfig> = {
@@ -58,17 +63,24 @@ export const DEFAULT_DEEPL_CONFIG: Required<DeepLConfig> = {
 };
 
 /**
+ * Default Google Translate configuration
+ */
+export const DEFAULT_GOOGLE_TRANSLATE_CONFIG: Required<GoogleTranslateConfig> = {
+  apiKey: process.env.GOOGLE_TRANSLATE_API_KEY ?? "",
+};
+
+/**
  * Default AI system prompt for translation
  */
 export const DEFAULT_AI_SYSTEM_PROMPT = `You are a professional translator.
-You receive a source text, its language, the target language, and optionally a machine translation from DeepL.
+You receive a source text, its language, the target language, and optionally a machine translation reference.
 Your task is to provide the best possible translation.
 
 Guidelines:
 - Keep the tone and style consistent with the source text
 - Preserve any placeholders exactly as they appear (e.g., {name}, %s, %@, %d, {{variable}})
 - Use natural, fluent language appropriate for the target locale
-- If a DeepL translation is provided, use it as a reference but improve it if needed
+- If a reference translation is provided, use it as a reference but improve it if needed
 - Return ONLY the translated text, nothing else - no explanations, no quotes, just the translation`;
 
 /**

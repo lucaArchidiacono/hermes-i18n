@@ -4,23 +4,28 @@ import type {
   TranslationResult,
 } from "../types.js";
 import { DeepLService } from "../../services/deepl.js";
+import { GoogleTranslateService } from "../../services/google-translate.js";
+import type { TranslationService } from "../../services/translator.js";
 import { logger } from "../../utils/logger.js";
 import { normalize, unescape } from "../../utils/strings.js";
 
 /**
  * DeepL translation step - translates missing entries using DeepL API
+ * Note: This class is kept as DeepLStep for backward compatibility,
+ * but now supports both DeepL and Google Translate based on config
  */
 export class DeepLStep implements PipelineStep {
-  name = "deepl-translate";
+  name = "translate";
 
   async execute(context: PipelineContext): Promise<PipelineContext> {
     const { config, translations } = context;
 
-    const service = new DeepLService(config.deepl);
+    // Create the appropriate translation service based on config
+    const service = this.createTranslationService(context);
 
     if (!service.isConfigured()) {
       logger.warn(
-        "DeepL API key not configured, skipping DeepL translation step"
+        `${config.translator} API key not configured, skipping translation step`
       );
       return context;
     }
@@ -31,7 +36,7 @@ export class DeepLStep implements PipelineStep {
       }
 
       logger.info(
-        `[${language}] Translating ${langTranslations.missing.size} keys via DeepL...`
+        `[${language}] Translating ${langTranslations.missing.size} keys via ${config.translator}...`
       );
 
       // Process translations sequentially (not concurrent)
@@ -57,9 +62,9 @@ export class DeepLStep implements PipelineStep {
 
         if (result.success && result.translation) {
           const normalizedTranslation = normalize(result.translation);
-          translationResult.deeplResult = normalizedTranslation;
+          translationResult.translatorResult = normalizedTranslation;
           translationResult.finalValue = normalizedTranslation;
-          translationResult.status = "deepl_only";
+          translationResult.status = "translator_only";
           logger.debug(`[${language}] Translated: "${normalizedKey}"`);
         } else if (result.skipped) {
           translationResult.error = result.skipReason;
@@ -87,5 +92,22 @@ export class DeepLStep implements PipelineStep {
     }
 
     return context;
+  }
+
+  /**
+   * Create the appropriate translation service based on config
+   */
+  private createTranslationService(
+    context: PipelineContext
+  ): TranslationService {
+    const { config } = context;
+
+    switch (config.translator) {
+      case "google":
+        return new GoogleTranslateService(config.googleTranslate);
+      case "deepl":
+      default:
+        return new DeepLService(config.deepl);
+    }
   }
 }

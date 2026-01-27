@@ -1,0 +1,29 @@
+{
+  "sourceLanguage": "en",
+  "targetLanguages": ["de", "fr", "es", "it"],
+  "source": {
+    "path": "./locales/en/Localizable.strings",
+    "type": "strings"
+  },
+  "outputs": [
+    {
+      "type": "strings",
+      "path": "./locales/{lang}/Localizable.strings"
+    },
+    {
+      "type": "json",
+      "path": "./locales/{lang}/Localizable.json"
+    }
+  ],
+  "include": ["./src/**/*.{ts,tsx,js,jsx}"],
+  "exclude": ["**/node_modules/**", "**/dist/**", "**/build/**"],
+  "translator": "deepl",
+  "deepl": {
+    "formality": "default"
+  },
+  "googleTranslate": {},
+  "ai": {
+    "provider": "openai",
+    "model": "gpt-4o-mini"
+  }
+}

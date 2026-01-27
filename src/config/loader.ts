@@ -4,7 +4,9 @@ import type { HermesConfig, ResolvedHermesConfig } from "./types.js";
 import {
   DEFAULT_EXTRACT_PATTERN,
   DEFAULT_EXCLUDE_PATTERNS,
+  DEFAULT_TRANSLATOR,
   DEFAULT_DEEPL_CONFIG,
+  DEFAULT_GOOGLE_TRANSLATE_CONFIG,
   DEFAULT_AI_SYSTEM_PROMPT,
   getAIProviderEnvKey,
 } from "./defaults.js";
@@ -128,9 +130,16 @@ function resolveConfig(config: HermesConfig): ResolvedHermesConfig {
     extractPattern: config.extractPattern
       ? new RegExp(config.extractPattern, "g")
       : DEFAULT_EXTRACT_PATTERN,
+    translator: config.translator ?? DEFAULT_TRANSLATOR,
     deepl: {
       apiKey: config.deepl?.apiKey ?? process.env.DEEPL_API_KEY ?? "",
       formality: config.deepl?.formality ?? DEFAULT_DEEPL_CONFIG.formality,
+    },
+    googleTranslate: {
+      apiKey:
+        config.googleTranslate?.apiKey ??
+        process.env.GOOGLE_TRANSLATE_API_KEY ??
+        "",
     },
     ai: {
       provider: config.ai.provider,

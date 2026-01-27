@@ -25,9 +25,11 @@ const DEFAULT_CONFIG = `{
   ],
   "include": ["./src/**/*.{ts,tsx,js,jsx}"],
   "exclude": ["**/node_modules/**", "**/dist/**", "**/build/**"],
+  "translator": "deepl",
   "deepl": {
     "formality": "default"
   },
+  "googleTranslate": {},
   "ai": {
     "provider": "openai",
     "model": "gpt-4o-mini"
@@ -58,10 +60,12 @@ export function initCommand(): Command {
         logger.info("");
         logger.info("Next steps:");
         logger.info("  1. Edit hermes.config.json to match your project structure");
-        logger.info("  2. Set up environment variables for API keys:");
-        logger.info("     - DEEPL_API_KEY (optional, for DeepL translations)");
+        logger.info("  2. Choose your translator: 'deepl' (default) or 'google'");
+        logger.info("  3. Set up environment variables for API keys:");
+        logger.info("     - DEEPL_API_KEY (for DeepL translations)");
+        logger.info("     - GOOGLE_TRANSLATE_API_KEY (for Google Translate)");
         logger.info("     - OPENAI_API_KEY (or other provider key for AI)");
-        logger.info("  3. Run 'hermes sync' to extract and translate strings");
+        logger.info("  4. Run 'hermes sync' to extract and translate strings");
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         logger.error(`Failed to create config file: ${message}`);

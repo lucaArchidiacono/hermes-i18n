@@ -2,6 +2,7 @@ import * as deepl from "deepl-node";
 import type { ResolvedHermesConfig } from "../config/types.js";
 import { logger } from "../utils/logger.js";
 import { RateLimiter } from "../utils/rate-limiter.js";
+import type { TranslationService, TranslationResult } from "./translator.js";
 
 /**
  * DeepL language codes that are supported
@@ -81,20 +82,9 @@ const DEEPL_SOURCE_LANGUAGE_MAP: Record<string, deepl.SourceLanguageCode> = {
 };
 
 /**
- * Result of a DeepL translation attempt
- */
-export interface DeepLResult {
-  success: boolean;
-  translation?: string;
-  error?: string;
-  skipped?: boolean;
-  skipReason?: string;
-}
-
-/**
  * DeepL translation service
  */
-export class DeepLService {
+export class DeepLService implements TranslationService {
   private translator: deepl.Translator | null = null;
   private apiKey: string;
   private formality: deepl.Formality;
@@ -134,7 +124,7 @@ export class DeepLService {
     text: string,
     sourceLanguage: string,
     targetLanguage: string
-  ): Promise<DeepLResult> {
+  ): Promise<TranslationResult> {
     // Check if source language is supported
     const sourceLang = this.mapSourceLanguage(sourceLanguage);
     if (!sourceLang) {

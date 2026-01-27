@@ -9,6 +9,11 @@ export type FileType = "strings" | "json";
 export type AIProvider = "openai" | "anthropic" | "google" | "mistral";
 
 /**
+ * Supported translation providers
+ */
+export type TranslationProvider = "deepl" | "google";
+
+/**
  * Source file configuration
  */
 export interface SourceConfig {
@@ -36,6 +41,14 @@ export interface DeepLConfig {
   apiKey?: string;
   /** Formality preference for translations */
   formality?: "default" | "more" | "less" | "prefer_more" | "prefer_less";
+}
+
+/**
+ * Google Translate API configuration
+ */
+export interface GoogleTranslateConfig {
+  /** Google Cloud API key (defaults to GOOGLE_TRANSLATE_API_KEY env variable) */
+  apiKey?: string;
 }
 
 /**
@@ -70,8 +83,12 @@ export interface HermesConfig {
   exclude?: string[];
   /** Regex pattern to extract translation keys as a string (default: /_\(["'`](.+?)["'`]\)/g) */
   extractPattern?: string;
+  /** Translation provider to use (defaults to "deepl") */
+  translator?: TranslationProvider;
   /** DeepL configuration */
   deepl?: DeepLConfig;
+  /** Google Translate configuration */
+  googleTranslate?: GoogleTranslateConfig;
   /** AI configuration */
   ai: AIConfig;
 }
@@ -80,9 +97,11 @@ export interface HermesConfig {
  * Resolved configuration with all defaults applied
  */
 export interface ResolvedHermesConfig
-  extends Omit<HermesConfig, "extractPattern"> {
+  extends Omit<HermesConfig, "extractPattern" | "translator"> {
   exclude: string[];
   extractPattern: RegExp;
+  translator: TranslationProvider;
   deepl: Required<DeepLConfig>;
+  googleTranslate: Required<GoogleTranslateConfig>;
   ai: Required<AIConfig>;
 }

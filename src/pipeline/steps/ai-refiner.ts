@@ -5,7 +5,7 @@ import { normalize, unescape } from "../../utils/strings.js";
 
 /**
  * AI refinement step - refines translations using AI
- * Takes DeepL translations and improves them, or translates directly if DeepL failed
+ * Takes translator (DeepL/Google) translations and improves them, or translates directly if translator failed
  */
 export class AIRefinerStep implements PipelineStep {
   name = "ai-refine";
@@ -43,7 +43,7 @@ export class AIRefinerStep implements PipelineStep {
           unescape(normalizedSourceValue),
           config.sourceLanguage,
           language,
-          result.deeplResult
+          result.translatorResult
         );
 
         if (aiResult.success && aiResult.translation) {
@@ -54,14 +54,14 @@ export class AIRefinerStep implements PipelineStep {
           context.translationsSucceeded++;
           logger.debug(`[${language}] Refined: "${normalizedKey}"`);
         } else {
-          // AI failed - if we have DeepL result, keep it; otherwise mark as failed
-          if (result.deeplResult) {
-            // Keep DeepL result
-            result.finalValue = result.deeplResult;
-            result.status = "deepl_only";
+          // AI failed - if we have translator result, keep it; otherwise mark as failed
+          if (result.translatorResult) {
+            // Keep translator result
+            result.finalValue = result.translatorResult;
+            result.status = "translator_only";
             context.translationsSucceeded++;
             logger.debug(
-              `[${language}] AI failed, keeping DeepL result: "${normalizedKey}"`
+              `[${language}] AI failed, keeping translator result: "${normalizedKey}"`
             );
           } else {
             // No translation available

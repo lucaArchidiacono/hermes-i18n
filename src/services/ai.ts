@@ -39,7 +39,7 @@ export class AIService {
     sourceText: string,
     sourceLanguage: string,
     targetLanguage: string,
-    deeplTranslation?: string
+    referenceTranslation?: string
   ): Promise<AIResult> {
     if (!this.config.apiKey) {
       return {
@@ -54,7 +54,7 @@ export class AIService {
         sourceText,
         sourceLanguage,
         targetLanguage,
-        deeplTranslation
+        referenceTranslation
       );
 
       const result = await generateText({
@@ -122,13 +122,13 @@ export class AIService {
     sourceText: string,
     sourceLanguage: string,
     targetLanguage: string,
-    deeplTranslation?: string
+    referenceTranslation?: string
   ): string {
     let prompt = `Translate the following text from ${sourceLanguage} to ${targetLanguage}.\n\n`;
     prompt += `Source text: "${sourceText}"\n`;
 
-    if (deeplTranslation) {
-      prompt += `\nReference translation from DeepL: "${deeplTranslation}"\n`;
+    if (referenceTranslation) {
+      prompt += `\nReference translation: "${referenceTranslation}"\n`;
       prompt += `\nPlease review and improve this translation if needed, or confirm it if it's good.`;
     } else {
       prompt += `\nPlease provide the translation.`;
