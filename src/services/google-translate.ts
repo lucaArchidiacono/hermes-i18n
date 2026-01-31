@@ -4,6 +4,17 @@ import { RateLimiter } from "../utils/rate-limiter.js";
 import type { TranslationService, TranslationResult } from "./translator.js";
 
 /**
+ * Google Translate API response structure
+ */
+interface GoogleTranslateResponse {
+  data?: {
+    translations?: Array<{
+      translatedText?: string;
+    }>;
+  };
+}
+
+/**
  * Google Translate language codes mapping
  * Google Translate supports a wide range of languages
  */
@@ -211,16 +222,15 @@ export class GoogleTranslateService implements TranslationService {
           );
         }
 
-        const data = await response.json();
+        const data = (await response.json()) as GoogleTranslateResponse;
         return data;
       });
 
-      if (
-        result?.data?.translations?.[0]?.translatedText
-      ) {
+      const translatedText = result?.data?.translations?.[0]?.translatedText;
+      if (translatedText) {
         return {
           success: true,
-          translation: result.data.translations[0].translatedText,
+          translation: translatedText,
         };
       }
 
