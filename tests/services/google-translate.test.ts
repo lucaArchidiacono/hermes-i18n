@@ -1,4 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  type Mock,
+} from "vitest";
 import { GoogleTranslateService } from "../../src/services/google-translate.js";
 
 describe("GoogleTranslateService", () => {
@@ -7,9 +15,12 @@ describe("GoogleTranslateService", () => {
   };
 
   let originalFetch: typeof globalThis.fetch;
+  let mockFetch: Mock;
 
   beforeEach(() => {
     originalFetch = globalThis.fetch;
+    mockFetch = vi.fn();
+    globalThis.fetch = mockFetch as unknown as typeof fetch;
   });
 
   afterEach(() => {
@@ -33,7 +44,7 @@ describe("GoogleTranslateService", () => {
     it("should successfully translate text", async () => {
       const service = new GoogleTranslateService(mockConfig);
 
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: async () => ({
           data: {
@@ -46,7 +57,7 @@ describe("GoogleTranslateService", () => {
 
       expect(result.success).toBe(true);
       expect(result.translation).toBe("Hallo Welt");
-      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
     it("should skip when source language is not supported", async () => {
@@ -56,7 +67,9 @@ describe("GoogleTranslateService", () => {
 
       expect(result.success).toBe(false);
       expect(result.skipped).toBe(true);
-      expect(result.skipReason).toContain("Source language 'xyz' not supported");
+      expect(result.skipReason).toContain(
+        "Source language 'xyz' not supported",
+      );
     });
 
     it("should skip when target language is not supported", async () => {
@@ -66,7 +79,9 @@ describe("GoogleTranslateService", () => {
 
       expect(result.success).toBe(false);
       expect(result.skipped).toBe(true);
-      expect(result.skipReason).toContain("Target language 'xyz' not supported");
+      expect(result.skipReason).toContain(
+        "Target language 'xyz' not supported",
+      );
     });
 
     it("should skip when source and target languages are the same", async () => {
@@ -76,13 +91,15 @@ describe("GoogleTranslateService", () => {
 
       expect(result.success).toBe(false);
       expect(result.skipped).toBe(true);
-      expect(result.skipReason).toBe("Source and target languages are the same");
+      expect(result.skipReason).toBe(
+        "Source and target languages are the same",
+      );
     });
 
     it("should handle API errors gracefully", async () => {
       const service = new GoogleTranslateService(mockConfig);
 
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 401,
         text: async () => "Unauthorized",
@@ -98,7 +115,7 @@ describe("GoogleTranslateService", () => {
     it("should handle network errors gracefully", async () => {
       const service = new GoogleTranslateService(mockConfig);
 
-      globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+      mockFetch.mockRejectedValue(new Error("Network error"));
 
       const result = await service.translate("Hello", "en", "de");
 
@@ -109,7 +126,7 @@ describe("GoogleTranslateService", () => {
     it("should handle invalid API response", async () => {
       const service = new GoogleTranslateService(mockConfig);
 
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: async () => ({
           data: {},
@@ -125,7 +142,7 @@ describe("GoogleTranslateService", () => {
     it("should handle empty translations array in response", async () => {
       const service = new GoogleTranslateService(mockConfig);
 
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: async () => ({
           data: {
@@ -145,7 +162,7 @@ describe("GoogleTranslateService", () => {
     it("should map Chinese variants correctly", async () => {
       const service = new GoogleTranslateService(mockConfig);
 
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: async () => ({
           data: {
@@ -156,16 +173,16 @@ describe("GoogleTranslateService", () => {
 
       // Test simplified Chinese
       await service.translate("Hello", "en", "zh");
-      expect(globalThis.fetch).toHaveBeenCalled();
+      expect(mockFetch).toHaveBeenCalled();
 
-      const url = new URL((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]);
+      const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.searchParams.get("target")).toBe("zh-CN");
     });
 
     it("should map zh-hans to zh-CN", async () => {
       const service = new GoogleTranslateService(mockConfig);
 
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: async () => ({
           data: {
@@ -175,16 +192,16 @@ describe("GoogleTranslateService", () => {
       });
 
       await service.translate("Hello", "en", "zh-hans");
-      expect(globalThis.fetch).toHaveBeenCalled();
+      expect(mockFetch).toHaveBeenCalled();
 
-      const url = new URL((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]);
+      const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.searchParams.get("target")).toBe("zh-CN");
     });
 
     it("should map zh-hant to zh-TW", async () => {
       const service = new GoogleTranslateService(mockConfig);
 
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: async () => ({
           data: {
@@ -194,16 +211,16 @@ describe("GoogleTranslateService", () => {
       });
 
       await service.translate("Hello", "en", "zh-hant");
-      expect(globalThis.fetch).toHaveBeenCalled();
+      expect(mockFetch).toHaveBeenCalled();
 
-      const url = new URL((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]);
+      const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.searchParams.get("target")).toBe("zh-TW");
     });
 
     it("should handle case-insensitive language codes", async () => {
       const service = new GoogleTranslateService(mockConfig);
 
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: async () => ({
           data: {
@@ -213,9 +230,9 @@ describe("GoogleTranslateService", () => {
       });
 
       await service.translate("Hello", "EN", "FR");
-      expect(globalThis.fetch).toHaveBeenCalled();
+      expect(mockFetch).toHaveBeenCalled();
 
-      const url = new URL((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]);
+      const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.searchParams.get("source")).toBe("en");
       expect(url.searchParams.get("target")).toBe("fr");
     });
@@ -223,7 +240,7 @@ describe("GoogleTranslateService", () => {
     it("should map English variants correctly", async () => {
       const service = new GoogleTranslateService(mockConfig);
 
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: async () => ({
           data: {
@@ -234,14 +251,14 @@ describe("GoogleTranslateService", () => {
 
       await service.translate("Hello", "en-us", "de");
 
-      const url = new URL((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]);
+      const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.searchParams.get("source")).toBe("en");
     });
 
     it("should map Portuguese variants correctly", async () => {
       const service = new GoogleTranslateService(mockConfig);
 
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: async () => ({
           data: {
@@ -252,7 +269,7 @@ describe("GoogleTranslateService", () => {
 
       await service.translate("Hello", "en", "pt-br");
 
-      const url = new URL((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]);
+      const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.searchParams.get("target")).toBe("pt");
     });
   });
@@ -261,7 +278,7 @@ describe("GoogleTranslateService", () => {
     it("should send correct request parameters", async () => {
       const service = new GoogleTranslateService(mockConfig);
 
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: async () => ({
           data: {
@@ -272,12 +289,12 @@ describe("GoogleTranslateService", () => {
 
       await service.translate("Hello World", "en", "de");
 
-      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
-      const callArgs = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const callArgs = mockFetch.mock.calls[0];
       const url = new URL(callArgs[0]);
 
       expect(url.origin + url.pathname).toBe(
-        "https://translation.googleapis.com/language/translate/v2"
+        "https://translation.googleapis.com/language/translate/v2",
       );
       expect(url.searchParams.get("key")).toBe("test-api-key");
       expect(url.searchParams.get("q")).toBe("Hello World");
