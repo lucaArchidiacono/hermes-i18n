@@ -20,24 +20,11 @@ export class WriterStep implements PipelineStep {
         langTranslations.existing
       );
 
-      // Add successful translations
+      // Add only successful translations
       for (const [key, result] of langTranslations.results) {
         if (result.status !== "failed") {
           const normalizedKey = normalize(key);
           const normalizedValue = normalize(result.finalValue);
-          mergedEntries.set(normalizedKey, {
-            key: normalizedKey,
-            value: normalizedValue,
-          });
-        }
-      }
-
-      // Ensure all source keys exist (even if translation failed)
-      for (const [key, sourceEntry] of sourceEntries) {
-        const normalizedKey = normalize(key);
-        if (!mergedEntries.has(normalizedKey)) {
-          // Keep the source value as placeholder
-          const normalizedValue = normalize(sourceEntry.value);
           mergedEntries.set(normalizedKey, {
             key: normalizedKey,
             value: normalizedValue,

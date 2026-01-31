@@ -5,7 +5,7 @@ import { createPipelineContext } from "../../pipeline/types.js";
 import { ExtractorStep } from "../../pipeline/steps/extractor.js";
 import { SourceSyncStep } from "../../pipeline/steps/source-sync.js";
 import { MissingFinderStep } from "../../pipeline/steps/missing-finder.js";
-import { DeepLStep } from "../../pipeline/steps/deepl.js";
+import { TranslationStep } from "../../pipeline/steps/translator.js";
 import { AIRefinerStep } from "../../pipeline/steps/ai-refiner.js";
 import { WriterStep } from "../../pipeline/steps/writer.js";
 import { logger, setVerbose } from "../../utils/logger.js";
@@ -63,7 +63,7 @@ export function syncCommand(): Command {
           .addStep(new ExtractorStep())
           .addStep(new SourceSyncStep())
           .addStep(new MissingFinderStep())
-          .addStep(new DeepLStep())
+          .addStep(new TranslationStep())
           .addStep(new AIRefinerStep())
           .addStep(new WriterStep());
 

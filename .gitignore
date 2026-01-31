@@ -3,3 +3,4 @@ dist
 output
 .*.bun-build
 .DS_Store
+.env

@@ -11,7 +11,7 @@ Hermes is a standalone CLI tool for extracting, syncing, and translating localiz
 - **CLI Framework**: Commander
 - **Logging**: Consola
 - **Testing**: Vitest
-- **Translation**: DeepL API + Vercel AI SDK (configurable providers)
+- **Translation**: DeepL API / Google Translate API (with fallback) + Vercel AI SDK (configurable providers)
 
 ## Architecture
 
@@ -26,9 +26,9 @@ Extractor → SourceSync → MissingFinder → DeepL → AIRefiner → Writer
 1. **Extractor** - Scans code for `_("key")` patterns
 2. **SourceSync** - Adds missing keys to source file (creates file if needed)
 3. **MissingFinder** - Identifies untranslated entries per language
-4. **DeepLTranslator** - First-pass machine translation (skips unsupported languages)
+4. **Translator** - Machine translation via DeepL or Google Translate (with automatic fallback)
 5. **AIRefiner** - AI-powered translation refinement
-6. **Writer** - Writes results to output files
+6. **Writer** - Writes only successful translations to output files
 
 ### FileHandler Pattern
 
@@ -64,7 +64,7 @@ src/
 │       ├── extractor.ts      # Key extraction
 │       ├── source-sync.ts    # Source file sync
 │       ├── missing-finder.ts # Find untranslated
-│       ├── deepl.ts          # DeepL translation
+│       ├── translator.ts     # Machine translation (DeepL/Google)
 │       ├── ai-refiner.ts     # AI refinement
 │       └── writer.ts         # File writing
 ├── file-handlers/
@@ -75,6 +75,8 @@ src/
 │   └── xml.ts            # Android XML
 ├── services/
 │   ├── deepl.ts          # DeepL API wrapper
+│   ├── google-translate.ts # Google Translate API wrapper
+│   ├── translator.ts     # Translation service interface
 │   └── ai.ts             # Vercel AI SDK wrapper
 └── utils/
     ├── logger.ts         # Consola wrapper
@@ -89,8 +91,11 @@ src/
 | Key in code but not in source | Add key to source (value = key) |
 | Key in source but not in target | Translate and add to target |
 | Key in target with empty value | Translate and update |
-| DeepL unsupported language | Skip DeepL, use AI only |
-| DeepL API error | Mark failed, skip entry |
+| Only DeepL API key provided | Use DeepL only |
+| Only Google Translate API key provided | Use Google Translate only |
+| Both API keys provided | Try preferred service first, fallback to other on failure |
+| Translation service fails | Try fallback service, skip entry if all fail |
+| Translation failed | Do NOT write to target (no placeholder values) |
 | AI API error | Mark failed, skip entry |
 | Dry-run mode | Log all changes, write nothing |
 
@@ -152,10 +157,22 @@ bun run build
 
 ## Environment Variables
 
-- `DEEPL_API_KEY` - DeepL API key (optional)
+Copy `.env.example` to `.env` and fill in your API keys:
+
+```bash
+cp .env.example .env
+```
+
+### Translation Services (at least one required)
+
+- `DEEPL_API_KEY` - DeepL API key (optional, for machine translation)
+- `GOOGLE_TRANSLATE_API_KEY` - Google Cloud Translation API key (optional, for machine translation)
+
+### AI Providers (one required for refinement)
+
 - `OPENAI_API_KEY` - OpenAI API key
 - `ANTHROPIC_API_KEY` - Anthropic API key
-- `GOOGLE_API_KEY` - Google AI API key
+- `GOOGLE_API_KEY` - Google AI (Gemini) API key
 - `MISTRAL_API_KEY` - Mistral API key
 
 ## Adding New File Formats
