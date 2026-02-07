@@ -1,8 +1,8 @@
-# Hermes-i18n - Localization CLI Tool
+# Stryngz - Localization CLI Tool
 
 ## Project Overview
 
-Hermes is a standalone CLI tool for extracting, syncing, and translating localization strings. It scans codebases for `_("key")` patterns and manages translations across iOS (`.strings`), JavaScript (`.json`), and Android (`.xml`) formats.
+Stryngz is a standalone CLI tool for extracting, syncing, and translating localization strings. It scans codebases for `_("key")` patterns and manages translations across iOS (`.strings`), JavaScript (`.json`), and Android (`.xml`) formats.
 
 ## Tech Stack
 
@@ -55,7 +55,7 @@ src/
 │       └── init.ts       # Config generator
 ├── config/
 │   ├── types.ts          # Config TypeScript types
-│   ├── loader.ts         # Load hermes.config.json
+│   ├── loader.ts         # Load stryngz.config.json
 │   └── defaults.ts       # Default values
 ├── pipeline/
 │   ├── index.ts          # Pipeline runner
@@ -112,22 +112,22 @@ src/
 
 ```bash
 # Main sync command
-hermes sync
+stryngz sync
 
 # Preview without writing
-hermes sync --dry-run
+stryngz sync --dry-run
 
 # Verbose output
-hermes sync --verbose
+stryngz sync --verbose
 
 # Process specific languages only
-hermes sync --language de fr
+stryngz sync --language de fr
 
 # Use custom config path
-hermes sync --config ./path/to/hermes.config.json
+stryngz sync --config ./path/to/stryngz.config.json
 
 # Generate config file
-hermes init
+stryngz init
 ```
 
 ## Testing

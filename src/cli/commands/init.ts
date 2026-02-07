@@ -44,13 +44,13 @@ export function initCommand(): Command {
   const command = new Command("init");
 
   command
-    .description("Create a hermes.config.json file in the current directory")
+    .description("Create a stryngz.config.json file in the current directory")
     .option("-f, --force", "Overwrite existing config file", false)
     .action(async (options) => {
-      const configPath = resolve(process.cwd(), "hermes.config.json");
+      const configPath = resolve(process.cwd(), "stryngz.config.json");
 
       if (existsSync(configPath) && !options.force) {
-        logger.error("hermes.config.json already exists. Use --force to overwrite.");
+        logger.error("stryngz.config.json already exists. Use --force to overwrite.");
         process.exit(1);
       }
 
@@ -59,13 +59,13 @@ export function initCommand(): Command {
         logger.success(`Created ${configPath}`);
         logger.info("");
         logger.info("Next steps:");
-        logger.info("  1. Edit hermes.config.json to match your project structure");
+        logger.info("  1. Edit stryngz.config.json to match your project structure");
         logger.info("  2. Choose your translator: 'deepl' (default) or 'google'");
         logger.info("  3. Set up environment variables for API keys:");
         logger.info("     - DEEPL_API_KEY (for DeepL translations)");
         logger.info("     - GOOGLE_TRANSLATE_API_KEY (for Google Translate)");
         logger.info("     - OPENAI_API_KEY (or other provider key for AI)");
-        logger.info("  4. Run 'hermes sync' to extract and translate strings");
+        logger.info("  4. Run 'stryngz sync' to extract and translate strings");
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         logger.error(`Failed to create config file: ${message}`);

@@ -9,7 +9,7 @@ export function createCLI(): Command {
   const program = new Command();
 
   program
-    .name("hermes")
+    .name("stryngz")
     .description("CLI tool for extracting, syncing, and translating localization strings")
     .version("0.1.0");
 

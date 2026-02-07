@@ -6,7 +6,7 @@ import { ExtractorStep } from "../../src/pipeline/steps/extractor.js";
 import { SourceSyncStep } from "../../src/pipeline/steps/source-sync.js";
 import { MissingFinderStep } from "../../src/pipeline/steps/missing-finder.js";
 import { createPipelineContext } from "../../src/pipeline/types.js";
-import type { ResolvedHermesConfig } from "../../src/config/types.js";
+import type { ResolvedStryngzConfig } from "../../src/config/types.js";
 
 describe("Pipeline escape handling", () => {
   const testDir = resolve(__dirname, "../fixtures/escape-integration-test");
@@ -22,7 +22,7 @@ describe("Pipeline escape handling", () => {
     rmSync(testDir, { recursive: true, force: true });
   });
 
-  function createConfig(): ResolvedHermesConfig {
+  function createConfig(): ResolvedStryngzConfig {
     return {
       sourceLanguage: "en",
       targetLanguages: ["de"],

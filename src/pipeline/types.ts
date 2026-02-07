@@ -1,4 +1,4 @@
-import type { ResolvedHermesConfig } from "../config/types.js";
+import type { ResolvedStryngzConfig } from "../config/types.js";
 import type { LocalizationEntry } from "../file-handlers/types.js";
 
 /**
@@ -56,7 +56,7 @@ export interface PipelineError {
  */
 export interface PipelineContext {
   /** Resolved configuration */
-  config: ResolvedHermesConfig;
+  config: ResolvedStryngzConfig;
   /** Base directory (where config file is located) */
   baseDir: string;
   /** Whether this is a dry run (no file writes) */
@@ -108,7 +108,7 @@ export interface PipelineStep {
  * Create an initial pipeline context
  */
 export function createPipelineContext(
-  config: ResolvedHermesConfig,
+  config: ResolvedStryngzConfig,
   baseDir: string,
   dryRun: boolean
 ): PipelineContext {

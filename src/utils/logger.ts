@@ -1,7 +1,7 @@
 import { consola, createConsola } from "consola";
 
 /**
- * Logger instance for Hermes
+ * Logger instance for Stryngz
  * Uses consola for beautiful console output
  */
 export const logger = createConsola({

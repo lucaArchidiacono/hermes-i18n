@@ -3,7 +3,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createMistral } from "@ai-sdk/mistral";
-import type { ResolvedHermesConfig, AIProvider } from "../config/types.js";
+import type { ResolvedStryngzConfig, AIProvider } from "../config/types.js";
 import { logger } from "../utils/logger.js";
 
 /**
@@ -19,9 +19,9 @@ export interface AIResult {
  * AI translation service using Vercel AI SDK
  */
 export class AIService {
-  private config: ResolvedHermesConfig["ai"];
+  private config: ResolvedStryngzConfig["ai"];
 
-  constructor(config: ResolvedHermesConfig["ai"]) {
+  constructor(config: ResolvedStryngzConfig["ai"]) {
     this.config = config;
   }
 

@@ -66,9 +66,9 @@ export interface AIConfig {
 }
 
 /**
- * Main Hermes configuration
+ * Main Stryngz configuration
  */
-export interface HermesConfig {
+export interface StryngzConfig {
   /** Source language code (e.g., "en") */
   sourceLanguage: string;
   /** Target language codes to translate into */
@@ -96,8 +96,8 @@ export interface HermesConfig {
 /**
  * Resolved configuration with all defaults applied
  */
-export interface ResolvedHermesConfig
-  extends Omit<HermesConfig, "extractPattern" | "translator"> {
+export interface ResolvedStryngzConfig
+  extends Omit<StryngzConfig, "extractPattern" | "translator"> {
   exclude: string[];
   extractPattern: RegExp;
   translator: TranslationProvider;

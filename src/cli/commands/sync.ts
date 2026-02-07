@@ -18,7 +18,7 @@ export function syncCommand(): Command {
 
   command
     .description("Extract, sync, and translate localization strings")
-    .option("-c, --config <path>", "Path to hermes.config.json file")
+    .option("-c, --config <path>", "Path to stryngz.config.json file")
     .option("-d, --dry-run", "Preview changes without writing files", false)
     .option("-v, --verbose", "Verbose output", false)
     .option("-l, --language <langs...>", "Only process specific language(s)")
@@ -28,7 +28,7 @@ export function syncCommand(): Command {
           setVerbose(true);
         }
 
-        logger.info("Starting Hermes sync...");
+        logger.info("Starting Stryngz sync...");
 
         // Load configuration
         const { config, configDir } = await loadConfig(options.config);
@@ -100,7 +100,7 @@ function printSummary(context: {
 }): void {
   logger.box(
     [
-      "Hermes Sync Complete",
+      "Stryngz Sync Complete",
       "",
       `Keys extracted: ${context.extractedKeys.length}`,
       `New source keys: ${context.newSourceKeys.length}`,

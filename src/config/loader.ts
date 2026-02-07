@@ -1,6 +1,6 @@
 import { resolve, dirname } from "path";
 import { existsSync, readFileSync } from "fs";
-import type { HermesConfig, ResolvedHermesConfig } from "./types.js";
+import type { StryngzConfig, ResolvedStryngzConfig } from "./types.js";
 import {
   DEFAULT_EXTRACT_PATTERN,
   DEFAULT_EXCLUDE_PATTERNS,
@@ -15,7 +15,7 @@ import { logger } from "../utils/logger.js";
 /**
  * Default config file name
  */
-const CONFIG_FILE_NAME = "hermes.config.json";
+const CONFIG_FILE_NAME = "stryngz.config.json";
 
 /**
  * Find the config file in the given directory or its parents
@@ -45,12 +45,12 @@ export function findConfigFile(
  */
 export async function loadConfig(
   configPath?: string
-): Promise<{ config: ResolvedHermesConfig; configDir: string }> {
+): Promise<{ config: ResolvedStryngzConfig; configDir: string }> {
   const resolvedPath = configPath ? resolve(configPath) : findConfigFile();
 
   if (!resolvedPath) {
     throw new Error(
-      "Could not find hermes.config.json. Run 'hermes init' to create one."
+      "Could not find stryngz.config.json. Run 'stryngz init' to create one."
     );
   }
 
@@ -61,7 +61,7 @@ export async function loadConfig(
   logger.debug(`Loading config from: ${resolvedPath}`);
 
   const fileContent = readFileSync(resolvedPath, "utf-8");
-  const rawConfig: HermesConfig = JSON.parse(fileContent);
+  const rawConfig: StryngzConfig = JSON.parse(fileContent);
 
   // Validate required fields
   validateConfig(rawConfig);
@@ -78,7 +78,7 @@ export async function loadConfig(
 /**
  * Validate the raw config
  */
-function validateConfig(config: HermesConfig): void {
+function validateConfig(config: StryngzConfig): void {
   if (!config.sourceLanguage) {
     throw new Error("Config error: 'sourceLanguage' is required");
   }
@@ -121,7 +121,7 @@ function validateConfig(config: HermesConfig): void {
 /**
  * Resolve config with defaults
  */
-function resolveConfig(config: HermesConfig): ResolvedHermesConfig {
+function resolveConfig(config: StryngzConfig): ResolvedStryngzConfig {
   const aiEnvKey = getAIProviderEnvKey(config.ai.provider);
 
   return {

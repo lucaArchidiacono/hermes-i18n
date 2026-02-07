@@ -1,5 +1,5 @@
 import * as deepl from "deepl-node";
-import type { ResolvedHermesConfig } from "../config/types.js";
+import type { ResolvedStryngzConfig } from "../config/types.js";
 import { logger } from "../utils/logger.js";
 import { RateLimiter } from "../utils/rate-limiter.js";
 import type { TranslationService, TranslationResult } from "./translator.js";
@@ -90,7 +90,7 @@ export class DeepLService implements TranslationService {
   private formality: deepl.Formality;
   private rateLimiter: RateLimiter;
 
-  constructor(config: ResolvedHermesConfig["deepl"]) {
+  constructor(config: ResolvedStryngzConfig["deepl"]) {
     this.apiKey = config.apiKey;
     this.formality = this.mapFormality(config.formality);
     // DeepL API limit is 50 requests per second
@@ -200,7 +200,7 @@ export class DeepLService implements TranslationService {
    * Map formality setting
    */
   private mapFormality(
-    formality: ResolvedHermesConfig["deepl"]["formality"]
+    formality: ResolvedStryngzConfig["deepl"]["formality"]
   ): deepl.Formality {
     switch (formality) {
       case "more":

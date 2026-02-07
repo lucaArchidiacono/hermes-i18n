@@ -1,4 +1,4 @@
-import type { ResolvedHermesConfig } from "../config/types.js";
+import type { ResolvedStryngzConfig } from "../config/types.js";
 import { logger } from "../utils/logger.js";
 import { RateLimiter } from "../utils/rate-limiter.js";
 import type { TranslationService, TranslationResult } from "./translator.js";
@@ -147,7 +147,7 @@ export class GoogleTranslateService implements TranslationService {
   private rateLimiter: RateLimiter;
   private baseUrl = "https://translation.googleapis.com/language/translate/v2";
 
-  constructor(config: ResolvedHermesConfig["googleTranslate"]) {
+  constructor(config: ResolvedStryngzConfig["googleTranslate"]) {
     this.apiKey = config.apiKey;
     // Google Translate API has limits depending on your plan
     // Using a conservative rate of 100 requests per second

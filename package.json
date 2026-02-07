@@ -1,17 +1,17 @@
 {
-  "name": "hermes-i18n",
+  "name": "stryngz",
   "version": "0.1.12",
   "description": "CLI tool for extracting, syncing, and translating localization strings",
   "type": "module",
   "bin": {
-    "hermes": "./dist/index.js"
+    "stryngz": "./dist/index.js"
   },
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target node",
-    "archive": "bun build src/index.ts --compile --outfile ./output/hermes-i18n",
+    "archive": "bun build src/index.ts --compile --outfile ./output/stryngz",
     "dev": "bun run ./src/index.ts",
     "test": "vitest",
     "test:run": "vitest run",
@@ -50,11 +50,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lucaArchidiacono/hermes-i18n.git"
+    "url": "git+https://github.com/lucaArchidiacono/stryngz.git"
   },
-  "homepage": "https://github.com/lucaArchidiacono/hermes-i18n#readme",
+  "homepage": "https://github.com/lucaArchidiacono/stryngz#readme",
   "bugs": {
-    "url": "https://github.com/lucaArchidiacono/hermes-i18n/issues"
+    "url": "https://github.com/lucaArchidiacono/stryngz/issues"
   },
   "engines": {
     "node": ">=18.0.0"

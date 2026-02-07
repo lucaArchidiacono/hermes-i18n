@@ -5,8 +5,8 @@ export type {
   OutputConfig,
   DeepLConfig,
   AIConfig,
-  HermesConfig,
-  ResolvedHermesConfig,
+  StryngzConfig,
+  ResolvedStryngzConfig,
 } from "./types.js";
 
 export { loadConfig, findConfigFile } from "./loader.js";
