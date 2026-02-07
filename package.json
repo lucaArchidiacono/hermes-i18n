@@ -1,6 +1,6 @@
 {
   "name": "stryngz",
-  "version": "0.1.12",
+  "version": "1.0.0",
   "description": "CLI tool for extracting, syncing, and translating localization strings",
   "type": "module",
   "bin": {
