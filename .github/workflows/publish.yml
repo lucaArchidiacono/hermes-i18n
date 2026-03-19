@@ -16,24 +16,47 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check if version is already published
+        id: version-check
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          PUBLISHED=$(npm view stryngz@$CURRENT version 2>/dev/null || echo "")
+          if [ "$CURRENT" = "$PUBLISHED" ]; then
+            echo "Version $CURRENT already published, skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version $CURRENT not yet published"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup Bun
+        if: steps.version-check.outputs.skip == 'false'
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
       - name: Install dependencies
+        if: steps.version-check.outputs.skip == 'false'
         run: bun install --frozen-lockfile
 
+      - name: Run tests
+        if: steps.version-check.outputs.skip == 'false'
+        run: bun test:run
+
       - name: Build package
+        if: steps.version-check.outputs.skip == 'false'
         run: bun run build
 
       - name: Setup Node.js
+        if: steps.version-check.outputs.skip == 'false'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           registry-url: https://registry.npmjs.org
 
-      - name: Publish to npm with Trusted Publishing
+      - name: Publish to npm
+        if: steps.version-check.outputs.skip == 'false'
         env:
           NPM_CONFIG_PROVENANCE: true
         run: npm publish --access public --provenance
