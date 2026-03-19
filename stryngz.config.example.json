@@ -17,13 +17,14 @@
   ],
   "include": ["./src/**/*.{ts,tsx,js,jsx}"],
   "exclude": ["**/node_modules/**", "**/dist/**", "**/build/**"],
-  "translator": "deepl",
-  "deepl": {
-    "formality": "default"
-  },
-  "googleTranslate": {},
-  "ai": {
+  "extractPattern": "tr\\(\\s*\"([^\"\\\\]*(?:\\\\.[^\"\\\\]*)*)\"\\s*\\)",
+  "translations": [
+    { "provider": "deepl", "formality": "default" },
+    { "provider": "google-translate" }
+  ],
+  "refiner": {
     "provider": "openai",
-    "model": "gpt-4o-mini"
+    "model": "gpt-4o-mini",
+    "systemPrompt": "You are a professional translator and localization expert. Refine the following translations to ensure they are accurate, natural, and culturally appropriate for the target audience. Pay special attention to idiomatic expressions, context, and tone. Provide the refined translations in the same format as the input."
   }
 }
