@@ -1,14 +1,17 @@
 import { resolve, dirname } from "path";
 import { existsSync, readFileSync } from "fs";
-import type { StryngzConfig, ResolvedStryngzConfig } from "./types.js";
+import type {
+  StryngzConfig,
+  ResolvedStryngzConfig,
+  TranslationConfig,
+  MachineTranslationProviderName,
+  AIProviderName,
+} from "./types.js";
 import {
   DEFAULT_EXTRACT_PATTERN,
   DEFAULT_EXCLUDE_PATTERNS,
-  DEFAULT_TRANSLATOR,
-  DEFAULT_DEEPL_CONFIG,
-  DEFAULT_GOOGLE_TRANSLATE_CONFIG,
-  DEFAULT_AI_SYSTEM_PROMPT,
-  getAIProviderEnvKey,
+  resolveTranslationConfig,
+  resolveRefinerConfig,
 } from "./defaults.js";
 import { logger } from "../utils/logger.js";
 
@@ -17,11 +20,29 @@ import { logger } from "../utils/logger.js";
  */
 const CONFIG_FILE_NAME = "stryngz.config.json";
 
+/** All valid provider names */
+const VALID_MACHINE_PROVIDERS: readonly string[] = [
+  "deepl",
+  "google-translate",
+] satisfies MachineTranslationProviderName[];
+
+const VALID_AI_PROVIDERS: readonly string[] = [
+  "openai",
+  "anthropic",
+  "google-ai",
+  "mistral",
+] satisfies AIProviderName[];
+
+const VALID_PROVIDERS: readonly string[] = [
+  ...VALID_MACHINE_PROVIDERS,
+  ...VALID_AI_PROVIDERS,
+];
+
 /**
  * Find the config file in the given directory or its parents
  */
 export function findConfigFile(
-  startDir: string = process.cwd()
+  startDir: string = process.cwd(),
 ): string | null {
   let currentDir = resolve(startDir);
 
@@ -44,13 +65,13 @@ export function findConfigFile(
  * Load and parse the config file
  */
 export async function loadConfig(
-  configPath?: string
+  configPath?: string,
 ): Promise<{ config: ResolvedStryngzConfig; configDir: string }> {
   const resolvedPath = configPath ? resolve(configPath) : findConfigFile();
 
   if (!resolvedPath) {
     throw new Error(
-      "Could not find stryngz.config.json. Run 'stryngz init' to create one."
+      "Could not find stryngz.config.json. Run 'stryngz init' to create one.",
     );
   }
 
@@ -76,6 +97,36 @@ export async function loadConfig(
 }
 
 /**
+ * Validate a single translation config entry
+ */
+function validateTranslationEntry(
+  entry: TranslationConfig,
+  index: number,
+): void {
+  if (!entry.provider) {
+    throw new Error(
+      `Config error: translations[${index}] must have a 'provider'`,
+    );
+  }
+
+  if (!VALID_PROVIDERS.includes(entry.provider)) {
+    throw new Error(
+      `Config error: translations[${index}].provider '${entry.provider}' is not valid. Must be one of: ${VALID_PROVIDERS.join(", ")}`,
+    );
+  }
+
+  // AI providers require a model
+  if (
+    VALID_AI_PROVIDERS.includes(entry.provider) &&
+    !("model" in entry && entry.model)
+  ) {
+    throw new Error(
+      `Config error: translations[${index}] with provider '${entry.provider}' must have a 'model'`,
+    );
+  }
+}
+
+/**
  * Validate the raw config
  */
 function validateConfig(config: StryngzConfig): void {
@@ -85,19 +136,19 @@ function validateConfig(config: StryngzConfig): void {
 
   if (!config.targetLanguages || config.targetLanguages.length === 0) {
     throw new Error(
-      "Config error: 'targetLanguages' must have at least one language"
+      "Config error: 'targetLanguages' must have at least one language",
     );
   }
 
   if (!config.source?.path || !config.source?.type) {
     throw new Error(
-      "Config error: 'source.path' and 'source.type' are required"
+      "Config error: 'source.path' and 'source.type' are required",
     );
   }
 
   if (!config.outputs || config.outputs.length === 0) {
     throw new Error(
-      "Config error: 'outputs' must have at least one output configuration"
+      "Config error: 'outputs' must have at least one output configuration",
     );
   }
 
@@ -109,12 +160,34 @@ function validateConfig(config: StryngzConfig): void {
 
   if (!config.include || config.include.length === 0) {
     throw new Error(
-      "Config error: 'include' must have at least one glob pattern"
+      "Config error: 'include' must have at least one glob pattern",
     );
   }
 
-  if (!config.ai?.provider || !config.ai?.model) {
-    throw new Error("Config error: 'ai.provider' and 'ai.model' are required");
+  // Validate translations array
+  if (!config.translations || config.translations.length === 0) {
+    throw new Error(
+      "Config error: 'translations' must have at least one provider",
+    );
+  }
+
+  for (let i = 0; i < config.translations.length; i++) {
+    validateTranslationEntry(config.translations[i], i);
+  }
+
+  // Validate optional refiner
+  if (config.refiner) {
+    if (!config.refiner.provider) {
+      throw new Error("Config error: 'refiner.provider' is required");
+    }
+    if (!VALID_AI_PROVIDERS.includes(config.refiner.provider)) {
+      throw new Error(
+        `Config error: refiner.provider '${config.refiner.provider}' is not valid. Must be one of: ${VALID_AI_PROVIDERS.join(", ")}`,
+      );
+    }
+    if (!config.refiner.model) {
+      throw new Error("Config error: 'refiner.model' is required");
+    }
   }
 }
 
@@ -122,30 +195,13 @@ function validateConfig(config: StryngzConfig): void {
  * Resolve config with defaults
  */
 function resolveConfig(config: StryngzConfig): ResolvedStryngzConfig {
-  const aiEnvKey = getAIProviderEnvKey(config.ai.provider);
-
   return {
     ...config,
     exclude: config.exclude ?? DEFAULT_EXCLUDE_PATTERNS,
     extractPattern: config.extractPattern
       ? new RegExp(config.extractPattern, "g")
       : DEFAULT_EXTRACT_PATTERN,
-    translator: config.translator ?? DEFAULT_TRANSLATOR,
-    deepl: {
-      apiKey: config.deepl?.apiKey ?? process.env.DEEPL_API_KEY ?? "",
-      formality: config.deepl?.formality ?? DEFAULT_DEEPL_CONFIG.formality,
-    },
-    googleTranslate: {
-      apiKey:
-        config.googleTranslate?.apiKey ??
-        process.env.GOOGLE_TRANSLATE_API_KEY ??
-        "",
-    },
-    ai: {
-      provider: config.ai.provider,
-      model: config.ai.model,
-      apiKey: config.ai.apiKey ?? process.env[aiEnvKey] ?? "",
-      systemPrompt: config.ai.systemPrompt ?? DEFAULT_AI_SYSTEM_PROMPT,
-    },
+    translations: config.translations.map(resolveTranslationConfig),
+    refiner: config.refiner ? resolveRefinerConfig(config.refiner) : undefined,
   };
 }

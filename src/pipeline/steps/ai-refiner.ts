@@ -5,7 +5,8 @@ import { normalize, unescape } from "../../utils/strings.js";
 
 /**
  * AI refinement step - refines translations using AI
- * Takes translator (DeepL/Google) translations and improves them, or translates directly if translator failed
+ * Takes translations from the translation chain and improves them.
+ * Skipped if no refiner is configured.
  */
 export class AIRefinerStep implements PipelineStep {
   name = "ai-refine";
@@ -13,17 +14,22 @@ export class AIRefinerStep implements PipelineStep {
   async execute(context: PipelineContext): Promise<PipelineContext> {
     const { config, translations } = context;
 
-    const service = new AIService(config.ai);
+    if (!config.refiner) {
+      logger.debug("No refiner configured, skipping AI refinement step");
+      return context;
+    }
+
+    const service = new AIService(config.refiner);
 
     if (!service.isConfigured()) {
-      logger.warn("AI API key not configured, skipping AI refinement step");
+      logger.warn("AI refiner API key not configured, skipping AI refinement step");
       return context;
     }
 
     for (const [language, langTranslations] of translations) {
       // Only process entries that have results from previous steps
       const toRefine = Array.from(langTranslations.results.entries()).filter(
-        ([_, result]) => result.status !== "failed"
+        ([_, result]) => result.status !== "failed",
       );
 
       if (toRefine.length === 0) {
@@ -31,7 +37,7 @@ export class AIRefinerStep implements PipelineStep {
       }
 
       logger.info(
-        `[${language}] Refining ${toRefine.length} translations via AI...`
+        `[${language}] Refining ${toRefine.length} translations via AI...`,
       );
 
       // Process translations sequentially (not concurrent)
@@ -43,7 +49,7 @@ export class AIRefinerStep implements PipelineStep {
           unescape(normalizedSourceValue),
           config.sourceLanguage,
           language,
-          result.translatorResult
+          result.translatorResult,
         );
 
         if (aiResult.success && aiResult.translation) {
@@ -61,7 +67,7 @@ export class AIRefinerStep implements PipelineStep {
             result.status = "translator_only";
             context.translationsSucceeded++;
             logger.debug(
-              `[${language}] AI failed, keeping translator result: "${normalizedKey}"`
+              `[${language}] AI failed, keeping translator result: "${normalizedKey}"`,
             );
           } else {
             // No translation available
@@ -77,7 +83,7 @@ export class AIRefinerStep implements PipelineStep {
             });
 
             logger.debug(
-              `[${language}] AI failed: "${normalizedKey}" - ${result.error}`
+              `[${language}] AI failed: "${normalizedKey}" - ${result.error}`,
             );
           }
         }

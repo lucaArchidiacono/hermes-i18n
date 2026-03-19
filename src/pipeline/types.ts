@@ -11,12 +11,14 @@ export interface TranslationResult {
   sourceValue: string;
   /** The target language code */
   targetLanguage: string;
-  /** Result from translator service (DeepL/Google Translate) (if successful) */
+  /** Result from the translation chain (if successful) */
   translatorResult?: string;
   /** Result from AI refinement (if successful) */
   aiResult?: string;
   /** The final translation to use */
   finalValue: string;
+  /** Which provider produced the translation */
+  usedProvider?: string;
   /** Status of this translation */
   status: "success" | "translator_only" | "ai_only" | "failed";
   /** Error message if failed */

@@ -1,10 +1,19 @@
 export type {
   FileType,
-  AIProvider,
+  AIProviderName,
+  MachineTranslationProviderName,
   SourceConfig,
   OutputConfig,
-  DeepLConfig,
-  AIConfig,
+  DeepLTranslationConfig,
+  GoogleTranslateTranslationConfig,
+  AITranslationConfig,
+  TranslationConfig,
+  ResolvedDeepLTranslationConfig,
+  ResolvedGoogleTranslateTranslationConfig,
+  ResolvedAITranslationConfig,
+  ResolvedTranslationConfig,
+  RefinerConfig,
+  ResolvedRefinerConfig,
   StryngzConfig,
   ResolvedStryngzConfig,
 } from "./types.js";
@@ -14,8 +23,8 @@ export { loadConfig, findConfigFile } from "./loader.js";
 export {
   DEFAULT_EXTRACT_PATTERN,
   DEFAULT_EXCLUDE_PATTERNS,
-  DEFAULT_DEEPL_CONFIG,
   DEFAULT_AI_SYSTEM_PROMPT,
   getAIProviderEnvKey,
-  getDefaultAIConfig,
+  resolveTranslationConfig,
+  resolveRefinerConfig,
 } from "./defaults.js";

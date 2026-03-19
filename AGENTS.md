@@ -20,14 +20,14 @@ Stryngz is a standalone CLI tool for extracting, syncing, and translating locali
 The tool uses a sequential pipeline where each step processes and enriches a shared context:
 
 ```
-Extractor → SourceSync → MissingFinder → DeepL → AIRefiner → Writer
+Extractor → SourceSync → MissingFinder → Translator → AIRefiner (optional) → Writer
 ```
 
 1. **Extractor** - Scans code for `_("key")` patterns
 2. **SourceSync** - Adds missing keys to source file (creates file if needed)
 3. **MissingFinder** - Identifies untranslated entries per language
-4. **Translator** - Machine translation via DeepL or Google Translate (with automatic fallback)
-5. **AIRefiner** - AI-powered translation refinement
+4. **Translator** - Translates using the ordered `translations` provider chain (first success wins)
+5. **AIRefiner** - Optional AI-powered translation refinement (configured via `refiner`)
 6. **Writer** - Writes only successful translations to output files
 
 ### FileHandler Pattern
@@ -91,10 +91,9 @@ src/
 | Key in code but not in source | Add key to source (value = key) |
 | Key in source but not in target | Translate and add to target |
 | Key in target with empty value | Translate and update |
-| Only DeepL API key provided | Use DeepL only |
-| Only Google Translate API key provided | Use Google Translate only |
-| Both API keys provided | Try preferred service first, fallback to other on failure |
-| Translation service fails | Try fallback service, skip entry if all fail |
+| Single translation provider configured | Use that provider only |
+| Multiple translation providers configured | Try in array order, first success wins |
+| Translation provider fails | Try next provider in chain, skip entry if all fail |
 | Translation failed | Do NOT write to target (no placeholder values) |
 | AI API error | Mark failed, skip entry |
 | Dry-run mode | Log all changes, write nothing |
@@ -163,17 +162,16 @@ Copy `.env.example` to `.env` and fill in your API keys:
 cp .env.example .env
 ```
 
-### Translation Services (at least one required)
+### Translation Providers (at least one required, used in `translations` array)
 
-- `DEEPL_API_KEY` - DeepL API key (optional, for machine translation)
-- `GOOGLE_TRANSLATE_API_KEY` - Google Cloud Translation API key (optional, for machine translation)
+- `DEEPL_API_KEY` - DeepL API key (for `"deepl"` provider)
+- `GOOGLE_TRANSLATE_API_KEY` - Google Cloud Translation API key (for `"google-translate"` provider)
+- `OPENAI_API_KEY` - OpenAI API key (for `"openai"` provider)
+- `ANTHROPIC_API_KEY` - Anthropic API key (for `"anthropic"` provider)
+- `GOOGLE_API_KEY` - Google AI (Gemini) API key (for `"google-ai"` provider)
+- `MISTRAL_API_KEY` - Mistral API key (for `"mistral"` provider)
 
-### AI Providers (one required for refinement)
-
-- `OPENAI_API_KEY` - OpenAI API key
-- `ANTHROPIC_API_KEY` - Anthropic API key
-- `GOOGLE_API_KEY` - Google AI (Gemini) API key
-- `MISTRAL_API_KEY` - Mistral API key
+### AI Refiner (optional, uses same AI provider env vars above)
 
 ## Adding New File Formats
 
@@ -186,6 +184,7 @@ cp .env.example .env
 ## Adding New AI Providers
 
 1. Install the provider package from `@ai-sdk/`
-2. Update `AIProvider` type in `src/config/types.ts`
+2. Add the provider name to `AIProviderName` type in `src/config/types.ts`
 3. Add the provider case in `src/services/ai.ts`
-4. Add the env key mapping in `src/config/defaults.ts`
+4. Add the env key mapping in `getAIProviderEnvKey()` in `src/config/defaults.ts`
+5. Add the provider name to `VALID_AI_PROVIDERS` in `src/config/loader.ts`

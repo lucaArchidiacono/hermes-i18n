@@ -4,14 +4,14 @@
 export type FileType = "strings" | "json";
 
 /**
- * Supported AI providers via Vercel AI SDK
+ * Machine translation provider names
  */
-export type AIProvider = "openai" | "anthropic" | "google" | "mistral";
+export type MachineTranslationProviderName = "deepl" | "google-translate";
 
 /**
- * Supported translation providers
+ * AI provider names
  */
-export type TranslationProvider = "deepl" | "google";
+export type AIProviderName = "openai" | "anthropic" | "google-ai" | "mistral";
 
 /**
  * Source file configuration
@@ -33,10 +33,13 @@ export interface OutputConfig {
   path: string;
 }
 
+// --- Translation provider configs (discriminated union) ---
+
 /**
- * DeepL API configuration
+ * DeepL translation provider config
  */
-export interface DeepLConfig {
+export interface DeepLTranslationConfig {
+  provider: "deepl";
   /** DeepL API key (defaults to DEEPL_API_KEY env variable) */
   apiKey?: string;
   /** Formality preference for translations */
@@ -44,26 +47,84 @@ export interface DeepLConfig {
 }
 
 /**
- * Google Translate API configuration
+ * Google Translate provider config
  */
-export interface GoogleTranslateConfig {
+export interface GoogleTranslateTranslationConfig {
+  provider: "google-translate";
   /** Google Cloud API key (defaults to GOOGLE_TRANSLATE_API_KEY env variable) */
   apiKey?: string;
 }
 
 /**
- * AI configuration for translation refinement
+ * AI translation provider config (used as a direct translator in the fallback chain)
  */
-export interface AIConfig {
-  /** AI provider to use */
-  provider: AIProvider;
-  /** Model name (e.g., "gpt-4o-mini", "claude-3-haiku-20240307") */
+export interface AITranslationConfig {
+  provider: AIProviderName;
+  /** Model name (e.g., "gpt-4o-mini", "claude-sonnet-4-20250514") */
   model: string;
   /** API key (defaults to provider-specific env variable) */
   apiKey?: string;
   /** System prompt for the AI translator */
   systemPrompt?: string;
 }
+
+/**
+ * Union of all translation provider configs
+ */
+export type TranslationConfig =
+  | DeepLTranslationConfig
+  | GoogleTranslateTranslationConfig
+  | AITranslationConfig;
+
+// --- Resolved translation provider configs (all defaults applied) ---
+
+export interface ResolvedDeepLTranslationConfig {
+  provider: "deepl";
+  apiKey: string;
+  formality: "default" | "more" | "less" | "prefer_more" | "prefer_less";
+}
+
+export interface ResolvedGoogleTranslateTranslationConfig {
+  provider: "google-translate";
+  apiKey: string;
+}
+
+export interface ResolvedAITranslationConfig {
+  provider: AIProviderName;
+  model: string;
+  apiKey: string;
+  systemPrompt: string;
+}
+
+export type ResolvedTranslationConfig =
+  | ResolvedDeepLTranslationConfig
+  | ResolvedGoogleTranslateTranslationConfig
+  | ResolvedAITranslationConfig;
+
+// --- AI Refiner config (optional, separate from translation chain) ---
+
+/**
+ * AI refiner configuration - refines translations produced by the translation chain
+ */
+export interface RefinerConfig {
+  /** AI provider to use */
+  provider: AIProviderName;
+  /** Model name */
+  model: string;
+  /** API key (defaults to provider-specific env variable) */
+  apiKey?: string;
+  /** System prompt for the AI refiner */
+  systemPrompt?: string;
+}
+
+export interface ResolvedRefinerConfig {
+  provider: AIProviderName;
+  model: string;
+  apiKey: string;
+  systemPrompt: string;
+}
+
+// --- Main config ---
 
 /**
  * Main Stryngz configuration
@@ -83,25 +144,19 @@ export interface StryngzConfig {
   exclude?: string[];
   /** Regex pattern to extract translation keys as a string (default: /_\(["'`](.+?)["'`]\)/g) */
   extractPattern?: string;
-  /** Translation provider to use (defaults to "deepl") */
-  translator?: TranslationProvider;
-  /** DeepL configuration */
-  deepl?: DeepLConfig;
-  /** Google Translate configuration */
-  googleTranslate?: GoogleTranslateConfig;
-  /** AI configuration */
-  ai: AIConfig;
+  /** Ordered array of translation providers (tried in order, first success wins) */
+  translations: TranslationConfig[];
+  /** Optional AI refiner to improve translations after the translation chain */
+  refiner?: RefinerConfig;
 }
 
 /**
  * Resolved configuration with all defaults applied
  */
 export interface ResolvedStryngzConfig
-  extends Omit<StryngzConfig, "extractPattern" | "translator"> {
+  extends Omit<StryngzConfig, "extractPattern" | "translations" | "refiner"> {
   exclude: string[];
   extractPattern: RegExp;
-  translator: TranslationProvider;
-  deepl: Required<DeepLConfig>;
-  googleTranslate: Required<GoogleTranslateConfig>;
-  ai: Required<AIConfig>;
+  translations: ResolvedTranslationConfig[];
+  refiner?: ResolvedRefinerConfig;
 }

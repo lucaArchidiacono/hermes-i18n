@@ -3,8 +3,16 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createMistral } from "@ai-sdk/mistral";
-import type { ResolvedStryngzConfig, AIProvider } from "../config/types.js";
+import type {
+  ResolvedAITranslationConfig,
+  ResolvedRefinerConfig,
+} from "../config/types.js";
 import { logger } from "../utils/logger.js";
+
+/**
+ * AI config shape accepted by AIService
+ */
+type AIServiceConfig = ResolvedAITranslationConfig | ResolvedRefinerConfig;
 
 /**
  * Result of an AI translation attempt
@@ -19,9 +27,9 @@ export interface AIResult {
  * AI translation service using Vercel AI SDK
  */
 export class AIService {
-  private config: ResolvedStryngzConfig["ai"];
+  private config: AIServiceConfig;
 
-  constructor(config: ResolvedStryngzConfig["ai"]) {
+  constructor(config: AIServiceConfig) {
     this.config = config;
   }
 
@@ -39,7 +47,7 @@ export class AIService {
     sourceText: string,
     sourceLanguage: string,
     targetLanguage: string,
-    referenceTranslation?: string
+    referenceTranslation?: string,
   ): Promise<AIResult> {
     if (!this.config.apiKey) {
       return {
@@ -54,7 +62,7 @@ export class AIService {
         sourceText,
         sourceLanguage,
         targetLanguage,
-        referenceTranslation
+        referenceTranslation,
       );
 
       const result = await generateText({
@@ -102,7 +110,7 @@ export class AIService {
         const anthropic = createAnthropic({ apiKey });
         return anthropic(model);
       }
-      case "google": {
+      case "google-ai": {
         const google = createGoogleGenerativeAI({ apiKey });
         return google(model);
       }
@@ -122,7 +130,7 @@ export class AIService {
     sourceText: string,
     sourceLanguage: string,
     targetLanguage: string,
-    referenceTranslation?: string
+    referenceTranslation?: string,
   ): string {
     let prompt = `Translate the following text from ${sourceLanguage} to ${targetLanguage}.\n\n`;
     prompt += `Source text: "${sourceText}"\n`;

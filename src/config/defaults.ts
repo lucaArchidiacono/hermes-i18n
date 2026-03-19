@@ -1,4 +1,10 @@
-import type { DeepLConfig, GoogleTranslateConfig, AIConfig, TranslationProvider } from "./types.js";
+import type {
+  TranslationConfig,
+  ResolvedTranslationConfig,
+  RefinerConfig,
+  ResolvedRefinerConfig,
+  AIProviderName,
+} from "./types.js";
 
 /**
  * Extraction pattern for _("key"), _('key'), and _(`key`) function calls.
@@ -50,26 +56,6 @@ export const DEFAULT_EXCLUDE_PATTERNS = [
 ];
 
 /**
- * Default translation provider
- */
-export const DEFAULT_TRANSLATOR: TranslationProvider = "deepl";
-
-/**
- * Default DeepL configuration
- */
-export const DEFAULT_DEEPL_CONFIG: Required<DeepLConfig> = {
-  apiKey: process.env.DEEPL_API_KEY ?? "",
-  formality: "default",
-};
-
-/**
- * Default Google Translate configuration
- */
-export const DEFAULT_GOOGLE_TRANSLATE_CONFIG: Required<GoogleTranslateConfig> = {
-  apiKey: process.env.GOOGLE_TRANSLATE_API_KEY ?? "",
-};
-
-/**
  * Default AI system prompt for translation
  */
 export const DEFAULT_AI_SYSTEM_PROMPT = `You are a professional translator.
@@ -79,6 +65,7 @@ Your task is to provide the best possible translation.
 Guidelines:
 - Keep the tone and style consistent with the source text
 - Preserve any placeholders exactly as they appear (e.g., {name}, %s, %@, %d, {{variable}})
+- Preserve any escape sequences
 - Use natural, fluent language appropriate for the target locale
 - If a reference translation is provided, use it as a reference but improve it if needed
 - Return ONLY the translated text, nothing else - no explanations, no quotes, just the translation`;
@@ -86,28 +73,58 @@ Guidelines:
 /**
  * Get the environment variable name for an AI provider's API key
  */
-export function getAIProviderEnvKey(provider: string): string {
-  const envKeys: Record<string, string> = {
+export function getAIProviderEnvKey(provider: AIProviderName): string {
+  const envKeys: Record<AIProviderName, string> = {
     openai: "OPENAI_API_KEY",
     anthropic: "ANTHROPIC_API_KEY",
-    google: "GOOGLE_API_KEY",
+    "google-ai": "GOOGLE_API_KEY",
     mistral: "MISTRAL_API_KEY",
   };
-  return envKeys[provider] ?? `${provider.toUpperCase()}_API_KEY`;
+  return envKeys[provider];
 }
 
 /**
- * Get default AI configuration
+ * Resolve a single translation config entry with defaults
  */
-export function getDefaultAIConfig(
-  provider: string,
-  model: string
-): Required<AIConfig> {
-  const envKey = getAIProviderEnvKey(provider);
+export function resolveTranslationConfig(
+  config: TranslationConfig,
+): ResolvedTranslationConfig {
+  switch (config.provider) {
+    case "deepl":
+      return {
+        provider: "deepl",
+        apiKey: config.apiKey ?? process.env.DEEPL_API_KEY ?? "",
+        formality: config.formality ?? "default",
+      };
+    case "google-translate":
+      return {
+        provider: "google-translate",
+        apiKey: config.apiKey ?? process.env.GOOGLE_TRANSLATE_API_KEY ?? "",
+      };
+    default: {
+      // AI provider
+      const envKey = getAIProviderEnvKey(config.provider);
+      return {
+        provider: config.provider,
+        model: config.model,
+        apiKey: config.apiKey ?? process.env[envKey] ?? "",
+        systemPrompt: config.systemPrompt ?? DEFAULT_AI_SYSTEM_PROMPT,
+      };
+    }
+  }
+}
+
+/**
+ * Resolve the optional refiner config with defaults
+ */
+export function resolveRefinerConfig(
+  config: RefinerConfig,
+): ResolvedRefinerConfig {
+  const envKey = getAIProviderEnvKey(config.provider);
   return {
-    provider: provider as AIConfig["provider"],
-    model,
-    apiKey: process.env[envKey] ?? "",
-    systemPrompt: DEFAULT_AI_SYSTEM_PROMPT,
+    provider: config.provider,
+    model: config.model,
+    apiKey: config.apiKey ?? process.env[envKey] ?? "",
+    systemPrompt: config.systemPrompt ?? DEFAULT_AI_SYSTEM_PROMPT,
   };
 }
