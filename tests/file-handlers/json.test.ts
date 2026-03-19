@@ -22,7 +22,7 @@ describe("JsonHandler", () => {
 
     expect(entries.find((e) => e.key === "hello_world")?.value).toBe("Hello World");
     expect(entries.find((e) => e.key === "greeting")?.value).toBe("Hello, {name}!");
-    expect(entries.find((e) => e.key === "with_quotes")?.value).toBe('He said "Hello"');
+    expect(entries.find((e) => e.key === "with_quotes")?.value).toBe('He said \\"Hello\\"');
     expect(entries.find((e) => e.key === "multiline")?.value).toBe("Line 1\\nLine 2");
   });
 
@@ -79,7 +79,7 @@ describe("JsonHandler", () => {
   });
 
   it("should roundtrip escape sequences without accumulation", async () => {
-    const original = { key: "test", value: 'line1\\nline2\\t"quote"' };
+    const original = { key: "test", value: 'line1\\nline2\\t\\"quote\\"' };
 
     // Multiple write-read cycles should not accumulate escapes
     await handler.write(tempFile, [original]);
@@ -97,7 +97,7 @@ describe("JsonHandler", () => {
 
   it("should handle all escape types", async () => {
     const entries = [
-      { key: "quotes", value: 'He said "Hello"' },
+      { key: "quotes", value: 'He said \\"Hello\\"' },
       { key: "newline", value: "Line 1\\nLine 2" },
       { key: "backslash", value: "folder\\\\subfolder" },
       { key: "placeholder", value: "Hello {name}!" },

@@ -31,8 +31,8 @@ describe("String utilities", () => {
       expect(escape("path\\to\\file")).toBe("path\\\\to\\\\file");
     });
 
-    it("should leave quotes as literal characters", () => {
-      expect(escape('say "hello"')).toBe('say "hello"');
+    it("should escape double quotes", () => {
+      expect(escape('say "hello"')).toBe('say \\"hello\\"');
       expect(escape("say 'hello'")).toBe("say 'hello'");
     });
   });
