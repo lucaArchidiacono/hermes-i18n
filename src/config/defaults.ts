@@ -66,6 +66,7 @@ Guidelines:
 - Keep the tone and style consistent with the source text
 - Preserve any placeholders exactly as they appear (e.g., {name}, %s, %@, %d, {{variable}})
 - Preserve any escape sequences
+- Use same trailing punctuation as the source text
 - Use natural, fluent language appropriate for the target locale
 - If a reference translation is provided, use it as a reference but improve it if needed
 - Return ONLY the translated text, nothing else - no explanations, no quotes, just the translation`;
