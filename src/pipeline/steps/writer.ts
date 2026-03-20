@@ -67,7 +67,7 @@ export class WriterStep implements PipelineStep {
   /**
    * Write source language entries to all output formats.
    * The source language is not a target language, so the main loop skips it.
-   * This ensures output files (e.g. .strings) stay in sync with the source JSON.
+   * This ensures output files with same language (e.g. .strings) stay in sync with the source.
    */
   private async writeSourceLanguageOutputs(
     context: PipelineContext
